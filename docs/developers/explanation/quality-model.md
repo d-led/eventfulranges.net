@@ -36,9 +36,16 @@ answers are: split it, test it, or both. A method deliberately kept as a table o
 one-line cases can be named in `DISPATCH_TABLES` inside `crap.py` — it is then
 printed but not counted, so a table that grows into logic cannot hide.
 
-The current numbers: 328 tests, 470 methods measured, 13 uncovered, average CRAP
-2.7, nothing over budget. The uncovered ones are `ToString`/`Equals` overrides and
-the rare error path of a log that has already moved on.
+The current numbers: 380 tests, 482 methods measured, 28 uncovered, average CRAP
+2.7, nothing over budget. The uncovered ones are `ToString`/`Equals` overrides,
+the rare error path of a log that has already moved on, and the fifteen methods of
+`KurrentLog` — whose tests skip when no KurrentDB is reachable, which is why they
+are reported as uncovered rather than as passed.
+
+That last number is the one honest wrinkle in the gate: an unset
+`KURRENTDB_CONNECTION` lowers coverage without failing anything. The CRAP budget
+still catches a complex method with no test, and `scripts/itest-kurrent.sh` and
+the `kurrent` CI job are what exercise the store for real.
 
 ## Mutation testing, and why it is not in the gate
 
@@ -122,10 +129,12 @@ Named plainly, so nobody mistakes green for finished:
   but a full run is tens of minutes and its survivors need reading. See above.
 - **No coverage percentage gate.** Coverage is reported and read, not enforced; a
   method with no test already fails through CRAP.
-- **No benchmarks in the repository.** The indexed merge's threshold was measured
-  against the scan on a partitioned grid and on overlapping 3-D boxes, but the
-  harness was a scratch program: `BenchmarkDotNet` belongs here before a number
-  from it is published as a claim.
+- **Benchmarks are reported, not enforced.** `scripts/bench.sh` measures the two
+  merges on a partitioned grid; nothing fails if a change makes the indexed path
+  three times slower. The threshold is a claim with a harness behind it, not a
+  test.
+- **The KurrentDB tests need a server.** They skip without one, so the gate alone
+  cannot prove the store works; the `kurrent` CI job does.
 - **No culture matrix.** One test pins `ToString` under `de-DE` and invariant
   culture is used explicitly everywhere, which is cheaper than a matrix and
   catches the same class of bug.

@@ -29,6 +29,13 @@ or excluded, with retraction and layered views.
   from a compatible snapshot and replays only the tail; compaction rewrites the
   stream as one snapshot plus what it does not cover.
 - `RTree`: a static, bulk-loaded spatial index over a cover.
+- `EventfulRanges.Kurrent`: the first store backend beyond the local file —
+  operations as one KurrentDB stream and snapshots as another, with the server's
+  own optimistic concurrency as the version check. Its tests skip without a
+  server; `scripts/itest-kurrent.sh` and a CI job run them for real.
+- `scripts/bench.sh`: BenchmarkDotNet measured the two adjacent merges, which is
+  where the 512-box threshold comes from — the index is 6× the scan at 512 cells
+  and 49× at 4096, and level with it at 128.
 
 Tested to the same bar as the range half: oracle property tests over the algebra,
 replication properties, and a CRAP budget of 10 that every method meets.

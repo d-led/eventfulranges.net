@@ -12,13 +12,14 @@ dotnet build EventfulRanges.sln --configuration Release   # warnings are errors
 dotnet test EventfulRanges.sln --configuration Release    # behaviour + property tests
 ./scripts/format.sh                                        # apply formatting
 ./scripts/quality-gate.sh                                  # the gate: must end "QUALITY GATE PASSED"
-./scripts/mutation.sh                                      # mutation testing, tens of minutes"
-./scripts/bump-version.sh patch                            # version + changelog heading
+./scripts/mutation.sh                                      # mutation testing, tens of minutes"./scripts/bench.sh                                         # BenchmarkDotNet, minutes
+./scripts/kurrent-up.sh && ./scripts/itest-kurrent.sh      # the server-backed tests./scripts/bump-version.sh patch                            # version + changelog heading
 ./scripts/pack.sh                                          # build/packages/*.nupkg + *.snupkg
 ```
 
 Requires the .NET 10 SDK (pinned in `global.json`) and `python3` for
-`scripts/crap.py`.
+`scripts/crap.py`. The KurrentDB tests additionally need Docker: without
+`KURRENTDB_CONNECTION` they report as skipped, never as passed.
 
 ## Codebase map
 

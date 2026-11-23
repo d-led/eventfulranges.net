@@ -31,6 +31,24 @@ jobs:
           files: build/test-results/**/coverage.cobertura.xml
           fail_ci_if_error: false
 
+  # The only tests that need a running server. They skip in the gate above, so
+  # this job is what exercises the KurrentDB backend for real.
+  kurrent:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Start KurrentDB
+        run: ./scripts/kurrent-up.sh
+      - name: Integration tests
+        run: ./scripts/itest-kurrent.sh
+      - name: Stop KurrentDB
+        if: always()
+        run: ./scripts/kurrent-down.sh
+
   # Long-running quality gate: only on manual trigger to keep PR checks fast.
   quality-gate:
     if: github.event_name == 'workflow_dispatch'

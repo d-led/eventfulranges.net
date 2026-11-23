@@ -5,8 +5,8 @@
     scripts/bump-version.sh 0.0.7           # explicit
     scripts/bump-version.sh 0.1.0 --parity  # only once n-dimensional parity is done
 
-The project file is the single source of truth for the version: the release
-workflow refuses a tag that does not match it.
+The project files are the single source of truth for the version: the release
+workflow refuses a tag that does not match them, and both packages carry it.
 """
 
 from __future__ import annotations
@@ -17,7 +17,10 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-CSPROJ = ROOT / "src" / "EventfulRanges" / "EventfulRanges.csproj"
+CSPROJS = [
+    ROOT / "src" / "EventfulRanges" / "EventfulRanges.csproj",
+    ROOT / "src" / "EventfulRanges.Kurrent" / "EventfulRanges.Kurrent.csproj",
+]
 CHANGELOG = ROOT / "CHANGELOG.md"
 
 VERSION = re.compile(r"<Version>([^<]+)</Version>")
@@ -77,10 +80,10 @@ def main(argv: list[str]) -> int:
     if len(requests) != 1:
         fail("usage: bump-version.sh <patch|X.Y.Z> [--parity]")
 
-    text = CSPROJ.read_text(encoding="utf-8")
+    text = CSPROJS[0].read_text(encoding="utf-8")
     found = VERSION.search(text)
     if not found:
-        fail(f"no <Version> in {CSPROJ.relative_to(ROOT)}")
+        fail(f"no <Version> in {CSPROJS[0].relative_to(ROOT)}")
 
     current_text = found.group(1)
     current = parse(current_text)
@@ -102,10 +105,16 @@ def main(argv: list[str]) -> int:
     if git("tag", "--list", f"v{target_text}"):
         fail(f"tag v{target_text} already exists")
 
-    CSPROJ.write_text(
-        text.replace(f"<Version>{current_text}</Version>", f"<Version>{target_text}</Version>"),
-        encoding="utf-8",
-    )
+    for project in CSPROJS:
+        project_text = project.read_text(encoding="utf-8")
+        if f"<Version>{current_text}</Version>" not in project_text:
+            fail(f"{project.relative_to(ROOT)} does not carry {current_text}")
+        project.write_text(
+            project_text.replace(
+                f"<Version>{current_text}</Version>", f"<Version>{target_text}</Version>"
+            ),
+            encoding="utf-8",
+        )
     open_changelog_section(target_text)
 
     print(f"version {current_text} -> {target_text}")

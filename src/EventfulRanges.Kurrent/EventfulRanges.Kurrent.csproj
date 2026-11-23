@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>EventfulRanges.Kurrent</PackageId>
+    <Version>0.0.3</Version>
+    <Title>EventfulRanges.Kurrent</Title>
+    <Authors>Dmitry Ledentsov</Authors>
+    <Copyright>Copyright (c) 2026 Dmitry Ledentsov</Copyright>
+    <Description>A KurrentDB event log for EventfulRanges: the operations of a replica as a stream, and its snapshots as another.</Description>
+    <PackageTags>crdt;ranges;kurrentdb;eventstore;event-sourcing</PackageTags>
+    <PackageLicenseExpression>MPL-2.0</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageProjectUrl>https://github.com/d-led/eventfulranges.net</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/d-led/eventfulranges.net</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="KurrentDB.Client" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../EventfulRanges/EventfulRanges.csproj" />
+  </ItemGroup>
+
+</Project>

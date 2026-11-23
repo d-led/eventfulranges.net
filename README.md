@@ -95,9 +95,9 @@ calendar.Ranges;                                                  // [1,3) and (
 ```
 
 `MemoryLog` keeps the log in memory, `JsonlLog` writes it to
-`ranges.stream.jsonl`, and any `IEventLog` implementation swaps in instead. Two
-replicas that applied the same operations answer the same set, whatever order
-they arrived in.
+`ranges.stream.jsonl`, `EventfulRanges.Kurrent` keeps it in KurrentDB, and any
+`IEventLog` implementation swaps in instead. Two replicas that applied the same
+operations answer the same set, whatever order they arrived in.
 
 ## Roadmap
 
@@ -105,24 +105,28 @@ they arrived in.
 | --- | --- |
 | `0.0.1` | `Interval`, `Intervals`, `Sweep` — the interval algebra |
 | `0.0.2` | `Op`, clocks, `Strategies` — operations and conflict resolution |
-| next `0.0.x` | `Engine`, `MemoryLog`, `JsonlLog`, `RangeSet` — a working replica (on `main`) |
+| `0.0.3` | `Engine`, `MemoryLog`, `JsonlLog`, `RangeSet` — a working replica |
 | `0.0.x` | n-dimensional boxes, canonicalization, region queries, R-tree, `BoxSet`, retractions |
-| `0.0.x` | n-dimensional boxes, canonicalization, region queries, R-tree, `BoxSet`, retractions |
-| `0.1.0` | **n-dimensional parity** — the whole library surface, and the first version worth pinning |
+| `0.1.0` | **n-dimensional parity** — the whole library surface, the KurrentDB store, and the first version worth pinning |
 
 ## Quality
 
 One command, `./scripts/quality-gate.sh`: formatting, a warnings-as-errors build,
-every test with coverage, and a CRAP budget of 10 per method. Mutation testing is
-its own, longer script — `./scripts/mutation.sh` — because a surviving mutant is a
-question, not a failure. The laws are
+every test with coverage, and a CRAP budget of 10 per method. Two further scripts
+are deliberately outside it: `./scripts/mutation.sh` (Stryker.NET, because a
+surviving mutant is a question, not a failure) and `./scripts/bench.sh`
+(BenchmarkDotNet, which is where the adjacent merge's threshold comes from).
+`./scripts/itest-kurrent.sh` needs a server — `./scripts/kurrent-up.sh` starts one
+and the KurrentDB tests skip without it. The laws are
 checked against an independent brute-force oracle, not against the
 implementation. [Why the gate looks like this](https://github.com/d-led/eventfulranges.net/blob/main/docs/developers/explanation/quality-model.md)
 explains the numbers and what is deliberately not measured yet.
 
 Install and release mechanics:
 
-- `dotnet add package EventfulRanges` from nuget.org. Every tagged version is also
+- `dotnet add package EventfulRanges` from nuget.org, and
+  `dotnet add package EventfulRanges.Kurrent` for the KurrentDB store. Every
+tagged version is also
   mirrored to GitHub Packages (`https://nuget.pkg.github.com/d-led/index.json`),
   which requires credentials even for a public package.
 - Publishing happens only from a version tag, through NuGet Trusted Publishing —

@@ -22,6 +22,16 @@ THRESHOLD = 10.0
 GENERATED = ("JsonContext", ".g.cs", "AssemblyInfo", "/obj/")
 TESTS = ("/tests/",)
 
+# Code whose tests need infrastructure the gate cannot guarantee. The KurrentDB
+# backend's tests skip unless a server answers, so its coverage is a property of
+# the machine rather than of the change: measuring it here would fail every run
+# without Docker and flake on the ones with it. `scripts/itest-kurrent.sh` and
+# the `kurrent` CI job are where it is measured, and the exclusion is printed so
+# nobody mistakes the silence for a clean bill.
+# Cobertura names the file relative to the project, so the marker has no leading
+# slash.
+INFRASTRUCTURE_BACKED = ("EventfulRanges.Kurrent/",)
+
 # A library has no composition root: every part is measured where it lives.
 COMPOSITION_ROOTS: tuple[str, ...] = ()
 
@@ -52,6 +62,8 @@ def collect(report_path: str, only: str | None) -> dict[str, tuple[float, int, f
         if any(marker in source for marker in GENERATED):
             continue
         if any(marker in source for marker in TESTS):
+            continue
+        if any(marker in source for marker in INFRASTRUCTURE_BACKED):
             continue
         if short_name in COMPOSITION_ROOTS:
             continue
@@ -101,6 +113,7 @@ def report(report_paths: list[str], only: str | None) -> int:
     print(f"methods      {len(rows)}   uncovered {uncovered}   average CRAP {average:.1f}")
     print(f"covered rate {line_rate:.1%} (method average)")
     print(f"over {THRESHOLD:>3.0f}     {len(flagged)}   named dispatch tables {len(tables)}")
+    print(f"excluded     {len(INFRASTRUCTURE_BACKED)} infrastructure-backed module(s): tests need a server")
     print()
 
     for title, group in (("over budget", flagged), ("dispatch tables", tables)):

@@ -86,10 +86,28 @@ it is used. Removed upstream (commit `88c29b7` in the Go repository) after the
 port showed it as an unexplained cost in the fast path. No behaviour changed, and
 the `space` package stayed at 100% statement coverage.
 
+## 6. A read past the end of a log — fixed in both
+
+**The original answered the wrong version.** `kurrent.Store.Read` took the
+version from each event's number and otherwise returned the version the caller
+asked for, so reading version 9 of a two-op stream answered 9. An append at that
+expectation then conflicted, and a catch-up loop would have asked again. Both
+implementations now read the length from the last event when a read comes back
+empty (`2cbb865` in the Go repository).
+
+## 7. Stream names are parameters, not package variables
+
+`KurrentLog.Open` takes the operation and snapshot stream names, where the
+original keeps them as package-level variables that its tests reassign. Passing
+them is what lets two logs on one server stay apart without shared mutable state,
+and it keeps the tests parallel-safe.
+
 ## Deliberate non-divergences so far
 
 - Textual formatting is .NET's shortest round-trip (`1.5`, not `1.500000`), and
   is culture-independent. Wire format is JSON, not `ToString`.
+- The KurrentDB backend exists for the range half only, as in the original: the
+  box half's stores are `BoxMemoryLog` and `BoxJsonlLog`.
 - `Interval` is a permissive value: construction does not throw. The original's
   zero value is a valid point interval, and property tests need to be able to
   build malformed values to test `Validate`.

@@ -25,12 +25,14 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      - name: The tag must match the project version
+      - name: The tag must match the project versions
         run: |
           tag_version="${GITHUB_REF_NAME#v}"
-          project_version=$(python3 -c "import xml.etree.ElementTree as E; print(E.parse('src/EventfulRanges/EventfulRanges.csproj').getroot().findtext('PropertyGroup/Version'))")
-          echo "tag ${tag_version}, project ${project_version}"
-          test "${tag_version}" = "${project_version}"
+          for project in src/EventfulRanges/EventfulRanges.csproj src/EventfulRanges.Kurrent/EventfulRanges.Kurrent.csproj; do
+            project_version=$(python3 -c "import sys, xml.etree.ElementTree as E; print(E.parse(sys.argv[1]).getroot().findtext('PropertyGroup/Version'))" "${project}")
+            echo "tag ${tag_version}, ${project} ${project_version}"
+            test "${tag_version}" = "${project_version}"
+          done
 
       - name: Quality gate
         run: ./scripts/quality-gate.sh

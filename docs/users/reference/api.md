@@ -273,6 +273,34 @@ and implements the whole surface too. A stale `expectedVersion` throws
 processes appending at once. Compaction rewrites through a temporary file and a
 rename, so a crash cannot leave a half-written stream.
 
+### The KurrentDB store
+
+`EventfulRanges.Kurrent` puts the log in KurrentDB. It is a separate package so
+the client and its gRPC stack stay out of a library that is AOT-compatible
+without them.
+
+```csharp
+using var log = KurrentLog.Open("esdb://localhost:2113?tls=false");
+using var replica = await RangeSet.OpenStoreAsync(log, StrategyKind.Lww);
+```
+
+| Member | Behaviour |
+| --- | --- |
+| `KurrentLog.Open(string connectionString, string operationStream = "eventfulranges-ops", string snapshotStream = "eventfulranges-snapshot")` | Connects; the stream names are parameters so two logs on one server never share a log by accident |
+| `OperationStream`, `SnapshotStream` | The streams it reads and writes |
+| `AppendAsync`, `ReadAsync` | The `IEventLog` contract; KurrentDB's own expected revision is the version check |
+| `SaveSnapshotAsync`, `LoadSnapshotAsync` | The `ISnapshotStore` contract; the newest snapshot event wins |
+| `Dispose()` | Releases the connection |
+
+Two replicas may write the same stream: the loser of the race is told
+`StoreConflictException`, and the engine catches up and retries rather than
+failing. A read past the end of the stream reports the log's real length, not the
+version that was asked for.
+
+The store does **not** compact — a KurrentDB stream cannot lose its prefix — so
+`Engine.CompactAsync` reports that the log cannot compact. Snapshots still
+keep restarts cheap.
+
 ## `EngineOptions` and `Engine`
 
 ```csharp
@@ -432,6 +460,8 @@ stores them directly and needs no copying variant.
 - `Difference(a, b)` covers exactly the points of `a` that `b` does not.
 - A snapshot and its tail materialize to the same cover as the whole log.
 - `MergeAdjacent` returns the same cover whichever merge implementation runs.
+- A read past the end of a store reports the log's length, never the requested
+  version.
 - `Sweep` output is a partition of the union of its input.
 - `Materialize` is order-independent for every strategy; a replica that applied
 the same operations in another order, or received them from another replica,

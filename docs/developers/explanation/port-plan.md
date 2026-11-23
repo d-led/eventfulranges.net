@@ -314,13 +314,17 @@ Done, gated and on `main`:
 | P6 | Box snapshots and compaction: `IBoxSnapshotStore`, `ICompactableBoxLog`, `BoxEngine.SnapshotAsync`/`CompactAsync`, and a `BoxJsonlLog` that embeds snapshots as records it skips |
 | P7 | The indexed adjacent merge (`BoxMerger`, `CoverGrid`), with the threshold re-measured for this port rather than inherited |
 | P8 | Mutation testing as a script (`scripts/mutation.sh`, Stryker.NET at break-75 against a measured 77%), with the survivors read rather than counted |
+| P9 | `EventfulRanges.Kurrent`: the KurrentDB log, a skip-without-a-server test project, `kurrent-up.sh`/`itest-kurrent.sh` and a CI job that runs it against a container |
+| P10 | `benchmarks/EventfulRanges.Benchmarks`: the merge threshold measured by BenchmarkDotNet rather than by a scratch program |
 
-Still open, in the order they should be taken:
+Nothing on the port list is open: every Go library package has a C# counterpart,
+its tests are ported, and the pieces the original keeps behind a build tag have
+a script and a CI job instead.
 
-1. **`store/kurrent`** — the last store backend, and the only piece whose test
-   needs a running server, so it is the one thing the ordinary gate cannot
-   exercise. Docker is not running on this machine, and the store is not written
-   until it can be tested honestly.
-2. **Benchmarks** — the indexed merge's threshold was measured with a scratch
-   program, so `BenchmarkDotNet` in the repository is what turns it from a
-   measurement into a repeatable one.
+What is left is not porting:
+
+1. **Mutation testing to 80.** The run scores 77 with the survivors analysed as
+   equivalent or unattributable; the break sits at 75 so a regression fails.
+2. **A box store on KurrentDB.** The Go original has none — its KurrentDB backend
+   serves the range half only — so this is a feature, not a gap. `IBoxEventStore`
+   is the same shape, which is why it would be cheap.

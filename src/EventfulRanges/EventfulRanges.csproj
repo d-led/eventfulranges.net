@@ -37,6 +37,9 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="EventfulRanges.Tests" />
+    <InternalsVisibleTo Include="EventfulRanges.Kurrent" />
+    <InternalsVisibleTo Include="EventfulRanges.Kurrent.Tests" />
+    <InternalsVisibleTo Include="EventfulRanges.Benchmarks" />
   </ItemGroup>
 
 </Project>
