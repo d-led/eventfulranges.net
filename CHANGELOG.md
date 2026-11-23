@@ -27,4 +27,4 @@ Fixed against the original:
   closed", which made `[0,0]` overlap `(0,7]` and `[0,5) ∩ [0,5]` come out as
   `[0,5]`. The CRDT-visible behaviour is unchanged: `Normalize` merges on
   `Overlaps || Touches`, and that union is identical either way. See
-  `docs/DIVERGENCES.md`.
+  `docs/developers/explanation/divergences-from-go.md`.

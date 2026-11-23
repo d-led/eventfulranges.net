@@ -1,0 +1,31 @@
+# EventfulRanges
+
+> A CRDT for real-valued ranges in C# on .NET 10: replicas add and remove ranges, exchange operations, and converge to the same set in any arrival order.
+
+Package `EventfulRanges` · namespace `EventfulRanges` · target `net10.0` · license MPL-2.0 · current version `0.0.1` (interval algebra only).
+
+## Reference (exact specs)
+
+- [API reference](docs/users/reference/api.md): every public type, signature, default, exception and invariant.
+- [Release pipeline](docs/developers/reference/release-pipeline.md): tags, permissions, feeds, required nuget.org policy fields.
+
+## Tutorials (getting started)
+
+- [Quickstart](docs/users/tutorials/quickstart.md): install, subtract a range, print the result.
+- [Local development](docs/developers/tutorials/local-development.md): clone, build, test, run the quality gate, add a behaviour.
+
+## How-to guides (specific tasks)
+
+- [Model a calendar of busy days](docs/users/how-to/model-a-calendar.md): dates as day numbers, bookings, cancellations, membership queries.
+- [Cut a release](docs/developers/how-to/cut-a-release.md): bump, tag, push; what to do when the release is red.
+
+## Explanation (architecture and concepts)
+
+- [Range algebra](docs/users/explanation/range-algebra.md): why endpoints are compared, never combined; inclusivity; the shared-endpoint rule; why a sweep.
+- [Why the gate looks like this](docs/developers/explanation/quality-model.md): CRAP, the property-test oracle, and what is not measured yet.
+- [Port plan](docs/developers/explanation/port-plan.md): scope, phases and effort for reaching n-dimensional parity.
+- [Divergences from the Go original](docs/developers/explanation/divergences-from-go.md): the one place this library deliberately answers differently.
+
+## For repository work
+
+- [AGENTS.md](AGENTS.md): build commands, conventions, invariants.

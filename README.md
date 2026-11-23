@@ -17,51 +17,35 @@ model, the same quality bar, an API that reads like C# rather than like Go.
 > operation log, the replication engine, and the n-dimensional half follow in
 > `0.0.x`. **Nothing reaches 0.1 until n-dimensional parity.**
 
-## Install
+## Start here
 
-```shell
-dotnet add package EventfulRanges --version 0.0.1
-```
+| You want to | Read |
+| --- | --- |
+| get a program running in five minutes | [Quickstart](docs/users/tutorials/quickstart.md) |
+| solve a concrete task | [Model a calendar of busy days](docs/users/how-to/model-a-calendar.md) |
+| look up a signature, default or exception | [API reference](docs/users/reference/api.md) |
+| understand why it works this way | [Range algebra](docs/users/explanation/range-algebra.md) |
+| work on the library | [Local development](docs/developers/tutorials/local-development.md) · [AGENTS.md](AGENTS.md) |
+| cut a release | [Cut a release](docs/developers/how-to/cut-a-release.md) |
+| know what the gate measures | [Why the gate looks like this](docs/developers/explanation/quality-model.md) |
 
-Every tagged version is also mirrored to GitHub Packages
-(`https://nuget.pkg.github.com/d-led/index.json`). That feed requires credentials
-even for a public package, so `dotnet add package` works anonymously only from
-nuget.org; the mirror exists for CI and for keeping a copy of each tag.
+[`llms.txt`](llms.txt) is the same map in the form an agent routes from.
 
-Build from source:
-
-```shell
-dotnet build EventfulRanges.sln
-```
-
-## What you can do today
+## At a glance
 
 ```csharp
-using EventfulRanges;
-
-var booked = new Interval(1, 10);                                   // [1,10]
-var cancelled = new Interval(3, 5);                                 // [3,5]
-
-var busy = booked.Subtract(cancelled);                              // [1,3) and (5,10]
-var shared = Interval.Intersection(booked, new Interval(8, 20));    // [8,10]
-var union = Intervals.Union(busy, new[] { new Interval(7, 12) });   // [1,3) and (5,12]
+var busy = new Interval(1, 10).Subtract(new Interval(3, 5));                  // [1,3) and (5,10]
+var shared = Interval.Intersection(new Interval(1, 10), new Interval(8, 20)); // [8,10]
 ```
 
 Endpoints are `double`, compared and never combined, so no rounding error
-accumulates. Every interval carries inclusivity per side: `[a,b]`, `[a,b)`,
-`(a,b]`, `(a,b)`. A malformed interval is a value, not an exception:
-`Validate()` names the problem, and `EnsureValid()` throws where a well-formed
-one is required.
+accumulates. Inclusivity is per side: `[a,b]`, `[a,b)`, `(a,b]`, `(a,b)`. A
+malformed interval is a value, not an exception: `Validate()` names the problem,
+`EnsureValid()` throws where a well-formed one is required.
 
 Sweeping is what conflict resolution will stand on: `Intervals.Sweep` partitions
 the union of a set into maximal pieces, each labelled with the index of the
 winner under a caller-supplied priority.
-
-```csharp
-var covers = Intervals.Sweep(
-    new[] { new Interval(1, 9), new Interval(3, 5) },
-    better: (left, right) => left > right);   // [1,3) by 0, [3,5] by 1, (5,9] by 0
-```
 
 ## Roadmap
 
@@ -74,26 +58,21 @@ var covers = Intervals.Sweep(
 
 ## Quality
 
-One command: `./scripts/quality-gate.sh`. It runs formatting, a warnings-as-errors
-build, every test with coverage, and the CRAP budget.
+One command, `./scripts/quality-gate.sh`: formatting, a warnings-as-errors build,
+every test with coverage, and a CRAP budget of 10 per method. The laws are
+checked against an independent brute-force oracle, not against the
+implementation. [Why the gate looks like this](docs/developers/explanation/quality-model.md)
+explains the numbers and what is deliberately not measured yet.
 
-- **Tests specify behaviour.** Names read as sentences; assertions use Shouldly.
-- **Property tests against an independent oracle.** CsCheck generates interval
-  sets from a small integer grid — so shared endpoints, point intervals, and
-  open/closed disagreements are common — and compares every answer with
-  brute-force membership over an exhaustive probe grid.
-- **CRAP ≤ 10 per method** (`scripts/crap.py`): complexity squared, punished
-  cubically by missing coverage. A method must be simple, or tested, or both.
-- **The port is not a transliteration.** Where the original and its documentation
-  disagree, the port follows the documentation and records the divergence in
-  [docs/DIVERGENCES.md](docs/DIVERGENCES.md).
+Install and release mechanics:
+
+- `dotnet add package EventfulRanges` from nuget.org. Every tagged version is also
+  mirrored to GitHub Packages (`https://nuget.pkg.github.com/d-led/index.json`),
+  which requires credentials even for a public package.
+- Publishing happens only from a version tag, through NuGet Trusted Publishing —
+  no API key is stored or rotated.
 
 ## License
 
 Mozilla Public License 2.0. A derived work of
 [eventfulranges](https://github.com/d-led/eventfulranges); see [NOTICE](NOTICE).
-
-## Releasing
-
-Publishing happens only from a version tag, through NuGet Trusted Publishing —
-no API key is stored or rotated. See [docs/RELEASING.md](docs/RELEASING.md).
