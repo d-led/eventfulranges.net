@@ -69,10 +69,12 @@ compare against a brute-force answer, not against the implementation.
 | Path | Contents |
 | --- | --- |
 | `src/EventfulRanges/Interval.cs` | the range type and its algebra |
-| `src/EventfulRanges/Intervals.cs` | set operations over collections |
-| `src/EventfulRanges/Intervals.Sweep.cs` | the doubled-line sweep and its heap |
-| `src/EventfulRanges/Bound.cs` | inclusivity and its wire names |
-| `src/EventfulRanges/IntervalError.cs`, `InvalidIntervalException.cs` | validation vocabulary |
+| `src/EventfulRanges/Intervals.cs`, `Intervals.Sweep.cs` | set operations and the doubled-line sweep |
+| `src/EventfulRanges/Bound.cs`, `IntervalError.cs`, `InvalidIntervalException.cs` | inclusivity and the validation vocabulary |
+| `src/EventfulRanges/Op.cs`, `Strategies.cs`, `Engine.cs`, `RangeSet.cs` | the 1-D stack, from operation to facade |
+| `src/EventfulRanges/Box.cs`, `Boxes*.cs`, `Canonicalizer.cs` | box geometry: normalize, difference, adjacent merge, components, path queries |
+| `src/EventfulRanges/BoxOp.cs`, `BoxStrategies.cs`, `BoxEngine.cs`, `BoxSet.cs` | the n-D stack, from operation to facade |
+| `src/EventfulRanges/BoxMerger.cs`, `CoverGrid.cs`, `RTree.cs` | the indexed merge and the spatial index |
 | `tests/EventfulRanges.Tests/` | behaviour tests; `Properties/` holds oracle tests |
 | `scripts/` | gate, CRAP, version bump, packing |
 | `docs/users/`, `docs/developers/` | the four documentation quadrants |
@@ -85,5 +87,6 @@ compare against a brute-force answer, not against the implementation.
 - **Every public member has XML documentation.** The build generates the
   documentation file, so a missing summary is an error.
 - **Every method stays under CRAP 10.** Split it, test it, or both.
-- **`0.1.0` needs `--parity`.** The bump script refuses to move the minor version
-  before n-dimensional parity.
+- **`0.1.0` needs `--parity`.** The bump script refuses to cross from `0.0.x`
+  into a `0.1+` minor without `--parity`, the flag that marked the parity
+  release.

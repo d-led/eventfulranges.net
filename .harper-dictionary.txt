@@ -7,6 +7,8 @@ BoxSet
 BoxStrategies
 CRAP
 CsCheck
+cubically
+Degeneracies
 Diátaxis
 eventfulranges
 EventfulRanges
@@ -17,7 +19,9 @@ Lww
 MPL
 net10
 nuget
+OIDC
 permissive
+retag
 RTree
 Shouldly
 SourceLink

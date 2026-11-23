@@ -33,14 +33,14 @@ scores 1,740; the same method with tests scores 12 and still fails.
 Ten is the budget because a function that needs more than ten independent paths
 is usually two functions wearing one name. When the gate fails, the three honest
 answers are: split it, test it, or both. A method deliberately kept as a table of
-one-line cases can be named in `DISPATCH_TABLES` inside `crap.py` — it is then
+one-line cases can be named in `DISPATCH_TABLES` inside `crap.py`. It is then
 printed but not counted, so a table that grows into logic cannot hide.
 
-The current numbers: 380 tests, 482 methods measured, 28 uncovered, average CRAP
-2.7, nothing over budget. The uncovered ones are `ToString`/`Equals` overrides,
-the rare error path of a log that has already moved on, and the fifteen methods of
-`KurrentLog` — whose tests skip when no KurrentDB is reachable, which is why they
-are reported as uncovered rather than as passed.
+At the `0.1.0` gate run: 380 tests, 482 methods measured, 28 uncovered, average
+CRAP 2.7, nothing over budget. The uncovered ones are `ToString`/`Equals`
+overrides, the rare error path of a log that has already moved on, and the
+fifteen methods of `KurrentLog`. Their tests skip when no KurrentDB is reachable,
+so the gate reports them as uncovered rather than as passed.
 
 That last number is the one honest wrinkle in the gate: an unset
 `KURRENTDB_CONNECTION` lowers coverage without failing anything. The CRAP budget
@@ -59,11 +59,11 @@ line ran, mutation proves an assertion would have failed had the line been wrong
 It is a separate script because a full run takes tens of minutes, and because a
 surviving mutant is a question — a missing test, or a mutant no test can kill.
 
-The library scores **77%**: 1505 mutants, 1147 killed, 39 timed out, 319 survived.
-The interval arithmetic alone scores 92%, and the port's first run of the whole
-library was 76% — the difference between that and the current figure is a set of
-contract tests the run named: the public surface refuses a null argument at 52
-entry points, which nothing had asserted before.
+At the `0.1.0` run the library scores **77%**: 1505 mutants, 1147 killed, 39
+timed out, 319 survived. The interval arithmetic alone scores 92%, and the port's
+first run of the whole library was 76%. That gap is a set of contract tests the
+run named: the public surface refuses a null argument at 52 entry points, which
+nothing had asserted before.
 
 Reading the survivors matters more than the number. They fall into three groups:
 
@@ -71,9 +71,9 @@ Reading the survivors matters more than the number. They fall into three groups:
   hint, the order of the candidate buckets, the exact width of a bucket key, which
   of two boxes that both cover a third receives its metadata, and whether a cover
   known to be disjoint still looks for boxes to swallow. The answer is the same
-  either way, and the property test against the pairwise scan holds the two merge
-  implementations to it. Pinning them would mean testing the index instead of the
-  merge.
+  either way. The property test against the pairwise scan holds the two merge
+  implementations to it, and pinning those mutants would mean testing the index
+  instead of the merge.
 - **Argument guards Stryker cannot attribute.** 52 mutants of
   `ArgumentNullException.ThrowIfNull` come back with an empty `coveredBy`: the
   probe for a statement like this is not mapped to the tests that execute it, so
@@ -112,10 +112,10 @@ right, so the algebraic laws are checked against a brute-force implementation:
   grid plus the point just after it. Because coverage can only change at an
   endpoint, and every endpoint is an integer, probing those is exhaustive — not a
   sample.
-- Properties compare the library with the oracle (`Normalize` preserves
+- Properties compare the library with the oracle: `Normalize` preserves
   coverage, `Union` covers exactly the points either input covers, `Difference`
-  covers exactly the points of the first not in the second), plus the laws that
-  do not need an oracle at all: idempotence, order independence, sortedness,
+  covers exactly the points of the first that are not in the second. Further
+  properties need no oracle at all: idempotence, order independence, sortedness,
   disjointness, and the winner named by `Sweep`.
 
 The oracle is written independently, in the test project. An implementation that
@@ -123,7 +123,7 @@ checked itself would prove nothing.
 
 ## What the gate does not do yet
 
-Named plainly, so nobody mistakes green for finished:
+So nobody mistakes green for finished:
 
 - **Mutation testing is not in the gate.** It runs, and it scores above the bar,
   but a full run is tens of minutes and its survivors need reading. See above.

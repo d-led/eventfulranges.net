@@ -9,15 +9,16 @@ machine, and no API key to hold.
 ./scripts/bump-version.sh patch     # or an explicit X.Y.Z
 $EDITOR CHANGELOG.md                # say what changed and how it was proved
 ./scripts/quality-gate.sh
-git commit -am "0.0.2: ..."
-git tag v0.0.2
+git commit -am "X.Y.Z: ..."
+git tag vX.Y.Z
 git push && git push --tags
 ```
 
 The bump script updates the single source of truth (`<Version>` in the project
 file) and opens the changelog section. It refuses to run on a dirty tree, refuses
 a version that does not increase, refuses a tag that already exists, and refuses
-`0.1.x` without `--parity` — `0.1.0` is the n-dimensional parity release.
+to cross from `0.0.x` into a `0.1+` minor without `--parity` — the flag that
+marked the n-dimensional parity release.
 
 The tag starts [the release pipeline](../reference/release-pipeline.md), which
 checks the tag against the project version, runs the gate, packs, mirrors to
@@ -71,10 +72,10 @@ and the packed `README.md` comes from that commit too. Move the tag to the commi
 you want to ship:
 
 ```shell
-git tag -d v0.0.2
-git push origin --delete v0.0.2
-git tag v0.0.2 <commit>
-git push origin v0.0.2
+git tag -d vX.Y.Z
+git push origin --delete vX.Y.Z
+git tag vX.Y.Z <commit>
+git push origin vX.Y.Z
 ```
 
 Moving a tag is only safe while nothing has been published under it. Once a

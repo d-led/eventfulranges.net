@@ -77,8 +77,8 @@ credential.
 
 | Range | Meaning |
 | --- | --- |
-| `0.0.x` | the port in progress; every increment is a real, installable release |
-| `0.1.0` | n-dimensional parity — the first version worth pinning |
+| `0.0.x` | the port in progress; every increment was a real, installable release |
+| `0.1.x` | n-dimensional parity, and the first line worth pinning |
 | `1.0.0` | not scheduled |
 
 The version exists in exactly one place: `<Version>` in the project file.
@@ -98,6 +98,7 @@ The version exists in exactly one place: `<Version>` in the project file.
 
 - no demo or sample jobs;
 - no documentation deployment;
-- no integration tests against external services (none exist yet);
-- no mutation testing (planned with the conflict-resolution strategies);
-- no automatic changelog generation.
+- no automatic changelog generation;
+- no KurrentDB integration tests (they run in the `kurrent` CI job);
+- no mutation testing (`scripts/mutation.sh` runs Stryker.NET by hand, because a
+  full run takes tens of minutes).

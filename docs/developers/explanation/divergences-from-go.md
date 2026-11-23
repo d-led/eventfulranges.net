@@ -52,10 +52,9 @@ reason (`Span<T>`), and the documentation of both names the original's word.
 
 `RTree` has one build rather than the original's two: the original's second build
 exists to avoid copying the caller's boxes, and `Box` is immutable, so the copy
-never has to happen. `Search` sorts by `Box.CompareTo` — the library's canonical
-cover order — where the original sorts by a different total order that groups
-corners; the original's own documentation calls its order "canonical", which it is
-not.
+never has to happen. `Search` sorts by `Box.CompareTo`, the library's canonical
+cover order, where the original sorts by a different total order that groups
+corners.
 
 ## 3. Where the original drops what it has copied
 
@@ -80,7 +79,7 @@ what makes the number safe to differ: a wrong threshold can only cost time.
 ## 5. Where the original computed an answer nobody read
 
 `newCoverGrid` in the Go original walked every box's candidates to decide whether
-the cover was disjoint, and stored the answer in a field no code read: the merger
+the cover was disjoint, and stored the answer in a field no code read. The merger
 asks the same question itself, through the same candidates, and caches it where
 it is used. Removed upstream (commit `88c29b7` in the Go repository) after the
 port showed it as an unexplained cost in the fast path. No behaviour changed, and
