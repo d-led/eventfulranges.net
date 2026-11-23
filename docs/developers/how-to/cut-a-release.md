@@ -64,6 +64,22 @@ gh run rerun <run-id> --failed
 Nothing is published until that step succeeds, and `--skip-duplicate` makes every
 retry safe.
 
+### The tag predates fixes on `main`
+
+A re-run replays the tagged commit, so a fix that lives on `main` is not in it —
+and the packed `README.md` comes from that commit too. Move the tag to the commit
+you want to ship:
+
+```shell
+git tag -d v0.0.2
+git push origin --delete v0.0.2
+git tag v0.0.2 <commit>
+git push origin v0.0.2
+```
+
+Moving a tag is only safe while nothing has been published under it. Once a
+version is on nuget.org it is permanent: bump the version instead.
+
 ## After it succeeds
 
 1. `curl -s -o /dev/null -w '%{http_code}' https://api.nuget.org/v3-flatcontainer/eventfulranges/index.json`
