@@ -21,6 +21,9 @@ or excluded, with retraction and layered views.
   `Layers` for the painter's front.
 - `BoxEngine`, `BoxMemoryLog`, `BoxJsonlLog` and the `BoxSet` facade: an
   n-dimensional replica that persists and survives a restart.
+- `Boxes.MergeAdjacent` merges through cross-section, pair-order and spatial
+  indexes above 512 boxes — measured on this port — instead of pairwise passes,
+  with the same cover either way.
 - Snapshots and compaction for a box log: `IBoxSnapshotStore`,
   `ICompactableBoxLog`, `SnapshotAsync()`, `CompactAsync()`. A restart reloads
   from a compatible snapshot and replays only the tail; compaction rewrites the

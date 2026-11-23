@@ -83,7 +83,7 @@ public sealed class Box : IEquatable<Box>, IComparable<Box>
     public ImmutableArray<Bound> MaxBound { get; }
 
     /// <summary>Opaque JSON metadata carried by the box, joined on merge.</summary>
-    public ImmutableArray<byte> Meta { get; private init; }
+    public ImmutableArray<byte> Meta { get; private init; } = [];
 
     /// <summary>The number of dimensions.</summary>
     public int Dimensions => Min.Length;
@@ -122,7 +122,8 @@ public sealed class Box : IEquatable<Box>, IComparable<Box>
         axis < MaxBound.Length ? MaxBound[axis] : Bound.Open;
 
     /// <summary>Returns a copy of the box carrying the given metadata.</summary>
-    public Box WithMeta(ImmutableArray<byte> meta) => new(Min, Max, MinBound, MaxBound) { Meta = meta };
+    public Box WithMeta(ImmutableArray<byte> meta) =>
+        new(Min, Max, MinBound, MaxBound) { Meta = meta.IsDefault ? [] : meta };
 
     /// <summary>Reports the first reason the box is not well-formed, if any.</summary>
     public BoxError Validate()

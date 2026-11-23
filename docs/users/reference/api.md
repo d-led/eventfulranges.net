@@ -369,6 +369,9 @@ faces, axis by axis).
 `MergeAdjacent` is a deterministic greedy, not a minimal rectangle cover: it takes
 the first mergeable pair in canonical order and repeats. A pair whose shared face
 both sides exclude leaves a pinhole no single box can represent, so it stays apart.
+Above a few hundred boxes it merges the same cover through indexes instead of
+pairwise passes, which is what keeps a partition of thousands of cells quick; the
+two paths answer the same cover, so the choice is only ever about cost.
 
 ### `BoxOp` and `BoxStrategies`
 
@@ -428,6 +431,7 @@ stores them directly and needs no copying variant.
   neighbours overlap or touch. It is idempotent, and independent of input order.
 - `Difference(a, b)` covers exactly the points of `a` that `b` does not.
 - A snapshot and its tail materialize to the same cover as the whole log.
+- `MergeAdjacent` returns the same cover whichever merge implementation runs.
 - `Sweep` output is a partition of the union of its input.
 - `Materialize` is order-independent for every strategy; a replica that applied
 the same operations in another order, or received them from another replica,

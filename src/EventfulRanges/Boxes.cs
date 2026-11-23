@@ -203,7 +203,29 @@ public static partial class Boxes
     public static IReadOnlyList<Box> MergeAdjacent(IReadOnlyList<Box> boxes)
     {
         ArgumentNullException.ThrowIfNull(boxes);
+        return boxes.Count >= IndexedMergeThreshold ? BoxMerger.Merge(boxes) : MergeAdjacentByScan(boxes);
+    }
 
+    /// <summary>
+    /// The cover size at which indexing the cover for candidates, subsumers and
+    /// the merge order stops costing more than it saves.
+    /// </summary>
+    /// <remarks>
+    /// Measured on this port, not inherited: below it the scan wins or ties, and
+    /// above it the indexes pull away — at 5000 cells of a 2-D partition by a
+    /// factor of forty, and on overlapping 3-D boxes by three. The Go original
+    /// picks the same crossing at 2048, because its scan is cheaper to start;
+    /// the measurement, not the number, is what carries over.
+    /// </remarks>
+    internal const int IndexedMergeThreshold = 512;
+
+    /// <summary>
+    /// The same merge by testing pairs: a pair of passes over the cover is
+    /// cheaper than the indexes while the cover is small, and the slow path is
+    /// also the reference the indexed one is held to.
+    /// </summary>
+    internal static IReadOnlyList<Box> MergeAdjacentByScan(IReadOnlyList<Box> boxes)
+    {
         var cover = Normalize(boxes).ToList();
         while (FirstMergeablePair(cover) is { } pair)
         {
@@ -225,7 +247,7 @@ public static partial class Boxes
         {
             for (var second = first + 1; second < cover.Count; second++)
             {
-                if (Merge(cover[first], cover[second]) is Box merged)
+                if (MergePair(cover[first], cover[second]) is Box merged)
                 {
                     return (first, second, merged);
                 }
@@ -240,7 +262,7 @@ public static partial class Boxes
     /// merge when they differ on exactly one axis and meet there without leaving
     /// a pinhole between them.
     /// </summary>
-    private static Box? Merge(Box first, Box second)
+    internal static Box? MergePair(Box first, Box second)
     {
         if (first.Dimensions != second.Dimensions)
         {

@@ -312,6 +312,7 @@ Done, gated and on `main`:
 | P4 | `BoxOp` with retraction, all five box strategies, layered views, `BoxEngine`, `BoxMemoryLog`, `BoxJsonlLog`, `BoxSet` |
 | P5 | `RTree`, one build rather than two because `Box` is immutable |
 | P6 | Box snapshots and compaction: `IBoxSnapshotStore`, `ICompactableBoxLog`, `BoxEngine.SnapshotAsync`/`CompactAsync`, and a `BoxJsonlLog` that embeds snapshots as records it skips |
+| P7 | The indexed adjacent merge (`BoxMerger`, `CoverGrid`), with the threshold re-measured for this port rather than inherited |
 
 Still open, in the order they should be taken:
 
@@ -321,5 +322,5 @@ Still open, in the order they should be taken:
 2. **Mutation testing** (Stryker.NET, break at 80) — unported, and it will find
    equivalent mutants in the geometry, so it needs judgement rather than a
    threshold.
-3. **Indexed merge** (`merge_index.go`, 604 lines) — still deferred; the greedy
-   scan is the reference and both must agree.
+3. **`store/kurrent` integration test** — the store is written once Docker runs,
+   and it is the only piece the ordinary gate cannot exercise.
