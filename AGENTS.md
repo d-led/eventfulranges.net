@@ -12,6 +12,7 @@ dotnet build EventfulRanges.sln --configuration Release   # warnings are errors
 dotnet test EventfulRanges.sln --configuration Release    # behaviour + property tests
 ./scripts/format.sh                                        # apply formatting
 ./scripts/quality-gate.sh                                  # the gate: must end "QUALITY GATE PASSED"
+./scripts/mutation.sh                                      # mutation testing, tens of minutes"
 ./scripts/bump-version.sh patch                            # version + changelog heading
 ./scripts/pack.sh                                          # build/packages/*.nupkg + *.snupkg
 ```

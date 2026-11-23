@@ -65,6 +65,27 @@ not be kept would only reject input the builder can handle. A malformed box — 
 NaN coordinate — is still refused. Both halves are pinned by tests, because the
 ordering reads like an oversight until it is written down.
 
+## 4. Where the merge switches to indexes
+
+`MergeAdjacent` has two implementations in both languages and one contract: the
+same cover, whichever runs. The threshold between them is the only number that
+differs — 2048 in Go, 512 here — because it is a cost measurement against each
+language's scan, not a semantic choice. Measured on a partitioned 2-D grid and on
+overlapping 3-D boxes, the C# index overtakes its scan earlier: the Go scan is
+cheap to start and the C# one carries the cost of `InsertNormalized` per merge.
+
+The property test that holds the two paths to the same cover is ported, and it is
+what makes the number safe to differ: a wrong threshold can only cost time.
+
+## 5. Where the original computed an answer nobody read
+
+`newCoverGrid` in the Go original walked every box's candidates to decide whether
+the cover was disjoint, and stored the answer in a field no code read: the merger
+asks the same question itself, through the same candidates, and caches it where
+it is used. Removed upstream (commit `88c29b7` in the Go repository) after the
+port showed it as an unexplained cost in the fast path. No behaviour changed, and
+the `space` package stayed at 100% statement coverage.
+
 ## Deliberate non-divergences so far
 
 - Textual formatting is .NET's shortest round-trip (`1.5`, not `1.500000`), and

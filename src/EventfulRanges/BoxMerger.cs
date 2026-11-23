@@ -128,11 +128,6 @@ internal sealed class BoxMerger
     {
         for (var id = 0; id < boxes.Count; id++)
         {
-            if (!live[id])
-            {
-                continue;
-            }
-
             var subsumer = Subsumer(id);
             if (subsumer < 0)
             {

@@ -313,14 +313,14 @@ Done, gated and on `main`:
 | P5 | `RTree`, one build rather than two because `Box` is immutable |
 | P6 | Box snapshots and compaction: `IBoxSnapshotStore`, `ICompactableBoxLog`, `BoxEngine.SnapshotAsync`/`CompactAsync`, and a `BoxJsonlLog` that embeds snapshots as records it skips |
 | P7 | The indexed adjacent merge (`BoxMerger`, `CoverGrid`), with the threshold re-measured for this port rather than inherited |
+| P8 | Mutation testing as a script (`scripts/mutation.sh`, Stryker.NET at break-80), with the survivors read rather than counted |
 
 Still open, in the order they should be taken:
 
-1. **`store/kurrent`** — the last store backend, and the one that needs a running
-   server for its integration test. It is also the only piece whose test cannot
-   run in the ordinary gate, which is why it is separate.
-2. **Mutation testing** (Stryker.NET, break at 80) — unported, and it will find
-   equivalent mutants in the geometry, so it needs judgement rather than a
-   threshold.
-3. **`store/kurrent` integration test** — the store is written once Docker runs,
-   and it is the only piece the ordinary gate cannot exercise.
+1. **`store/kurrent`** — the last store backend, and the only piece whose test
+   needs a running server, so it is the one thing the ordinary gate cannot
+   exercise. Docker is not running on this machine, and the store is not written
+   until it can be tested honestly.
+2. **Benchmarks** — the indexed merge's threshold was measured with a scratch
+   program, so `BenchmarkDotNet` in the repository is what turns it from a
+   measurement into a repeatable one.

@@ -113,7 +113,9 @@ they arrived in.
 ## Quality
 
 One command, `./scripts/quality-gate.sh`: formatting, a warnings-as-errors build,
-every test with coverage, and a CRAP budget of 10 per method. The laws are
+every test with coverage, and a CRAP budget of 10 per method. Mutation testing is
+its own, longer script — `./scripts/mutation.sh` — because a surviving mutant is a
+question, not a failure. The laws are
 checked against an independent brute-force oracle, not against the
 implementation. [Why the gate looks like this](https://github.com/d-led/eventfulranges.net/blob/main/docs/developers/explanation/quality-model.md)
 explains the numbers and what is deliberately not measured yet.

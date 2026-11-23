@@ -19,15 +19,15 @@ public sealed class MergeIndexTests
     /// </summary>
     private static readonly Gen<List<Box>> Covers =
         Gen.Int[1, 3].SelectMany(dimensions =>
-            Gen.Int[0, 4].Array[dimensions].SelectMany(low =>
-                Gen.Int[0, 3].Array[dimensions].SelectMany(size =>
+            Gen.Int[-2, 6].Array[dimensions].SelectMany(low =>
+                Gen.Int[0, 6].Array[dimensions].SelectMany(size =>
                     Gen.Int[0, 3].Array[dimensions].Select(faces =>
                         new Box(
                             [.. low.Select(value => (double)value)],
                             [.. low.Zip(size, (start, length) => (double)(start + length))],
                             [.. faces.Select(code => code is 0 or 2 ? Bound.Closed : Bound.Open)],
                             [.. faces.Select(code => code is 0 or 1 ? Bound.Closed : Bound.Open)]))))
-            .List[0, 8]);
+            .List[0, 12]);
 
     [Fact]
     public void The_indexed_merge_agrees_with_the_scan_on_random_covers()
@@ -40,7 +40,7 @@ public sealed class MergeIndexTests
             Boxes.Equal(indexed, scanned).ShouldBeTrue(
                 $"cover: {Render(cover)}\n  indexed: {Render(indexed)}\n  scanned: {Render(scanned)}");
             TotalMeta(indexed).ShouldBe(TotalMeta(scanned));
-        });
+        }, iter: 500);
     }
 
     [Fact]
@@ -66,6 +66,30 @@ public sealed class MergeIndexTests
         cells.Count.ShouldBeGreaterThan(Boxes.IndexedMergeThreshold);
 
         Boxes.MergeAdjacent(cells).ShouldHaveSingleItem().ShouldBe(Cell(0, 0, 48, 48));
+    }
+
+    [Fact]
+    public void The_result_is_in_canonical_order()
+    {
+        var apart = new List<Box> { Cell(20, 0, 21, 1), Cell(0, 0, 1, 1), Cell(10, 0, 11, 1) };
+
+        BoxMerger.Merge(apart).ShouldBe([Cell(0, 0, 1, 1), Cell(10, 0, 11, 1), Cell(20, 0, 21, 1)]);
+    }
+
+    [Fact]
+    public void A_box_too_wide_for_the_grid_is_still_taken_into_account()
+    {
+        var cells = Enumerable.Range(0, 30)
+            .SelectMany(row => Enumerable.Range(0, 30).Select(column => Cell(column, row, column + 1, row + 1)));
+        var wide = Cell(-1000, -1000, 1000, 1000);
+
+        BoxMerger.Merge([.. cells, wide]).ShouldHaveSingleItem().ShouldBe(wide);
+    }
+
+    [Fact]
+    public void Merging_nothing_asks_for_a_cover()
+    {
+        Should.Throw<ArgumentNullException>(() => BoxMerger.Merge(null!));
     }
 
     [Fact]

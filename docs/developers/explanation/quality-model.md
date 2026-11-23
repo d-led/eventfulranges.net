@@ -36,9 +36,48 @@ answers are: split it, test it, or both. A method deliberately kept as a table o
 one-line cases can be named in `DISPATCH_TABLES` inside `crap.py` — it is then
 printed but not counted, so a table that grows into logic cannot hide.
 
-The current numbers: 313 tests, 407 methods measured, 10 uncovered, average CRAP
-2.6, nothing over budget. The uncovered ones are `ToString`/`Equals` overrides and
+The current numbers: 328 tests, 470 methods measured, 13 uncovered, average CRAP
+2.7, nothing over budget. The uncovered ones are `ToString`/`Equals` overrides and
 the rare error path of a log that has already moved on.
+
+## Mutation testing, and why it is not in the gate
+
+```shell
+./scripts/mutation.sh
+```
+
+Stryker.NET rewrites a comparison, a boundary or a whole statement and asks
+whether any test notices. It answers a question the gate cannot: coverage proves a
+line ran, mutation proves an assertion would have failed had the line been wrong.
+It is a separate script because a full run takes tens of minutes, and because a
+surviving mutant is a question — a missing test, or a mutant no test can kill.
+
+The library scores **77%**: 1505 mutants, 1147 killed, 39 timed out, 319 survived.
+The interval arithmetic alone scores 92%, and the port's first run of the whole
+library was 76% — the difference between that and the current figure is a set of
+contract tests the run named: the public surface refuses a null argument at 52
+entry points, which nothing had asserted before.
+
+Reading the survivors matters more than the number. They fall into three groups:
+
+- **Bookkeeping with no observable effect** (most of them): a dictionary capacity
+  hint, the order of the candidate buckets, the exact width of a bucket key, which
+  of two boxes that both cover a third receives its metadata, and whether a cover
+  known to be disjoint still looks for boxes to swallow. The answer is the same
+  either way, and the property test against the pairwise scan holds the two merge
+  implementations to it. Pinning them would mean testing the index instead of the
+  merge.
+- **Argument guards Stryker cannot attribute.** 52 mutants of
+  `ArgumentNullException.ThrowIfNull` come back with an empty `coveredBy`: the
+  probe for a statement like this is not mapped to the tests that execute it, so
+  the tests that do exercise the guard cannot be credited. They are neither killed
+  nor a gap, and no test can change the report.
+- **Real gaps, which were fixed rather than counted.** A lost sort in the merge
+  result, a candidate the grid could not reach, and a box too wide to register.
+  Each is now a test.
+
+The break is set at 75, below the baseline, so the run fails on a regression while
+the target of 80 stays honest about what it would take to reach.
 
 ## Behaviour tests
 
@@ -79,13 +118,14 @@ checked itself would prove nothing.
 
 Named plainly, so nobody mistakes green for finished:
 
-- **No mutation testing.** `Stryker.NET` at break-80 is planned for the strategy
-  layer, where equivalent mutants are the interesting question.
+- **Mutation testing is not in the gate.** It runs, and it scores above the bar,
+  but a full run is tens of minutes and its survivors need reading. See above.
 - **No coverage percentage gate.** Coverage is reported and read, not enforced; a
   method with no test already fails through CRAP.
-- **No benchmarks.** The sweep and the indexed merge will be measured with
-  `BenchmarkDotNet` when the merge path lands; until a threshold is measured, a
-  number in the repository would be a guess.
+- **No benchmarks in the repository.** The indexed merge's threshold was measured
+  against the scan on a partitioned grid and on overlapping 3-D boxes, but the
+  harness was a scratch program: `BenchmarkDotNet` belongs here before a number
+  from it is published as a claim.
 - **No culture matrix.** One test pins `ToString` under `de-DE` and invariant
   culture is used explicitly everywhere, which is cheaper than a matrix and
   catches the same class of bug.
