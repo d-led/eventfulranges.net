@@ -1,12 +1,13 @@
 # Changelog
 
-Versioning: `0.0.x` while the library is being ported. `0.1.0` is the
-n-dimensional parity release — the first version with the whole surface.
+`0.1.0` is the n-dimensional parity release: the port covers the whole library
+rather than half of it, and is the first version worth pinning.
 
-## Unreleased — the n-dimensional half
+## 0.1.0 — n-dimensional parity
 
 The same CRDT over boxes: regions in any number of dimensions, each face included
-or excluded, with retraction and layered views.
+or excluded, with retraction and layered views. The `0.0.3` surface is unchanged
+and still supported as it was.
 
 - `Box` with per-face inclusivity, validation, geometry-only equality and canonical
   order; `Boxes` with normalize, union, exact difference, insertion, adjacent merge
@@ -38,7 +39,13 @@ or excluded, with retraction and layered views.
   and 49× at 4096, and level with it at 128.
 
 Tested to the same bar as the range half: oracle property tests over the algebra,
-replication properties, and a CRAP budget of 10 that every method meets.
+replication properties, and a CRAP budget of 10 that every method meets. 380 tests
+in the gate, 17 more against a live KurrentDB server, and mutation testing at 77%
+with every survivor read.
+
+Two things this release does not do, both written down rather than left to be
+discovered: it does not compact a KurrentDB stream (a stream cannot lose its
+prefix), and its mutation score is 77 against a target of 80.
 
 ## 0.0.3
 

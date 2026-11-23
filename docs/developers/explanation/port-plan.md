@@ -1,11 +1,13 @@
 # C# port plan — eventfulranges.net
 
-Status: **the library port is complete on `main` except two pieces**, listed at the
-end of this page. Everything below is kept as the plan it was, so the estimates
-can be compared with what actually happened.
+Status: **the port is complete.** Every Go library package has a C# counterpart
+and its tests; what is left is not porting, and is listed at the end of this
+page. Everything below is kept as the plan it was, so the estimates can be
+compared with what actually happened.
 
-The 1-D half shipped as `0.0.1`–`0.0.3`; the n-dimensional half is on `main` and
-becomes `0.1.0` once the last two pieces land and the docs match the code.
+The range half shipped as `0.0.1`–`0.0.3`; `0.1.0` is the n-dimensional parity
+release, with the KurrentDB store and the benchmark harness the port list asked
+for.
 
 **Goal.** A C#/.NET 10 port of the generic eventfulranges CRDT library and its
 API, built to the same quality bar as the Go library (100% coverage, oracle

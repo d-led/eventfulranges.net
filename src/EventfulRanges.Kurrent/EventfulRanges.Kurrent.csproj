@@ -8,7 +8,7 @@
 
   <PropertyGroup>
     <PackageId>EventfulRanges.Kurrent</PackageId>
-    <Version>0.0.3</Version>
+    <Version>0.1.0</Version>
     <Title>EventfulRanges.Kurrent</Title>
     <Authors>Dmitry Ledentsov</Authors>
     <Copyright>Copyright (c) 2026 Dmitry Ledentsov</Copyright>

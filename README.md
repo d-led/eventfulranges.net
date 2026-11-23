@@ -11,13 +11,14 @@ ends up with the same set — no coordinator, no consensus, any arrival order.
 A port of [eventfulranges](https://github.com/d-led/eventfulranges): the same
 model, the same quality bar, an API that reads like C# rather than like Go.
 
-> **Status: `0.0.3` is published; the n-dimensional half is complete on `main`.**
-> Published so far: intervals, operations, clocks, the four range strategies, the
-> log engine, its memory and JSON Lines stores, and the `RangeSet` replica facade.
-> `main` adds the whole n-dimensional half — boxes, the box algebra, retraction,
-> the five box strategies, layered views, line queries, an R-tree and `BoxSet`.
-> **`0.1.0` is the n-dimensional parity release**, and the only version worth
-> pinning before it is `0.0.3`.
+> **Status: `0.1.0` is the n-dimensional parity release.**
+> The whole library is here: intervals, operations, clocks, the four range
+> strategies, the log engines with their memory, JSON Lines and KurrentDB stores,
+> the `RangeSet` replica, and then the n-dimensional half — boxes, the box
+> algebra, retraction, the five box strategies, layered views, line queries, an
+> R-tree and `BoxSet`.
+> `0.1.0` is the first version worth pinning; `0.0.3` carried the range half
+alone.
 
 ## Install
 

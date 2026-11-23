@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Grpc.Core;
 using KurrentDB.Client;
 
 namespace EventfulRanges.Kurrent;
@@ -92,6 +93,10 @@ public sealed class KurrentLog : IEventStore, IDisposable
         {
             throw new StoreConflictException(expectedVersion, await CurrentVersionAsync(cancellationToken));
         }
+        catch (RpcException error) when (error.StatusCode == StatusCode.Cancelled)
+        {
+            throw Cancelled(error, cancellationToken);
+        }
     }
 
     /// <summary>
@@ -123,6 +128,10 @@ public sealed class KurrentLog : IEventStore, IDisposable
         {
             return new LogReadResult([], 0);
         }
+        catch (RpcException error) when (error.StatusCode == StatusCode.Cancelled)
+        {
+            throw Cancelled(error, cancellationToken);
+        }
 
         // Nothing after the requested version may mean the stream ends before
         // it, and the caller still needs the log's real length.
@@ -140,11 +149,18 @@ public sealed class KurrentLog : IEventStore, IDisposable
         ArgumentNullException.ThrowIfNull(data);
 
         var metadata = JsonSerializer.SerializeToUtf8Bytes(new SnapshotMetadata(version));
-        await client.AppendToStreamAsync(
-            snapshotStream,
-            StreamState.Any,
-            [new EventData(Uuid.NewUuid(), SnapshotEventType, data, metadata, JsonContentType)],
-            cancellationToken: cancellationToken);
+        try
+        {
+            await client.AppendToStreamAsync(
+                snapshotStream,
+                StreamState.Any,
+                [new EventData(Uuid.NewUuid(), SnapshotEventType, data, metadata, JsonContentType)],
+                cancellationToken: cancellationToken);
+        }
+        catch (RpcException error) when (error.StatusCode == StatusCode.Cancelled)
+        {
+            throw Cancelled(error, cancellationToken);
+        }
     }
 
     /// <summary>Returns the latest snapshot.</summary>
@@ -168,6 +184,10 @@ public sealed class KurrentLog : IEventStore, IDisposable
         catch (StreamNotFoundException)
         {
             // Fall through: a snapshot stream that was never written holds none.
+        }
+        catch (RpcException error) when (error.StatusCode == StatusCode.Cancelled)
+        {
+            throw Cancelled(error, cancellationToken);
         }
 
         throw new SnapshotNotFoundException();
@@ -212,9 +232,23 @@ public sealed class KurrentLog : IEventStore, IDisposable
         {
             // No stream is an empty log.
         }
+        catch (RpcException error) when (error.StatusCode == StatusCode.Cancelled)
+        {
+            throw Cancelled(error, cancellationToken);
+        }
 
         return 0;
     }
+
+    /// <summary>
+    /// Presents a cancelled call the same way on every platform: gRPC reports it
+    /// as an <see cref="RpcException"/> with <see cref="StatusCode.Cancelled"/>,
+    /// while a token cancelled before the call surfaces as
+    /// <see cref="OperationCanceledException"/>. A caller should not have to know
+    /// which happened.
+    /// </summary>
+    private static OperationCanceledException Cancelled(RpcException error, CancellationToken cancellationToken) =>
+        new("The KurrentDB call was cancelled.", error, cancellationToken);
 
     /// <summary>
     /// KurrentDB revisions are zero-based, so a log length of n means the append

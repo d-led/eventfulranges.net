@@ -163,6 +163,17 @@ public sealed class KurrentLogTests
     }
 
     [KurrentFact]
+    public async Task A_cancelled_token_stops_an_append_too()
+    {
+        using var log = OpenIsolated();
+        using var cancelled = new CancellationTokenSource();
+        await cancelled.CancelAsync();
+
+        await Should.ThrowAsync<OperationCanceledException>(
+            async () => await log.AppendAsync(0, [Op.Add(0, 1)], cancelled.Token));
+    }
+
+    [KurrentFact]
     public async Task A_log_opens_with_the_stream_names_it_was_given()
     {
         var suffix = Guid.NewGuid().ToString("n");
