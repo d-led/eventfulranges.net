@@ -3,6 +3,26 @@
 Versioning: `0.0.x` while the library is being ported. `0.1.0` is the
 n-dimensional parity release — the first version with the whole surface.
 
+## 0.0.2
+
+Operations, clocks and strategies: the step from algebra to CRDT events.
+
+- `Op`: kind, interval, timestamp and origin, with a process-unique,
+  roughly time-ordered identifier. `Op.Create`, `Op.Add`, `Op.Remove` and the
+  `…WithBounds` variants; `Validate`/`EnsureValid` with `OpError` and
+  `InvalidOpException`; records, so an engine stamps with `op with { Timestamp }`.
+- `OpKind` and `OpKindNames`: the `"add"`/`"remove"` wire names.
+- `IClock` with `HybridClock` (injectable `TimeProvider`, strictly increasing,
+  never behind an observed stamp) and `LamportClock`.
+- `StrategyKind`, `Winner`, `Segment` and `Strategies`: `Materialize`, `Segments`,
+  `CombineSegments`, `ToIntervals`, `IntervalsOf`, built on the existing sweep.
+- The strategy ranking is total — timestamp, then ordinal identifier, then
+  canonical interval order — so a log that repeats an identifier cannot make the
+  materialized set depend on arrival order.
+- The package README is self-contained: every link is absolute, so it works when
+  nuget.org renders it. `scripts/check-links.py` now fails the gate if the
+  packaged README ever carries a relative link.
+
 ## 0.0.1
 
 The interval foundation: everything the replication engine will stand on.

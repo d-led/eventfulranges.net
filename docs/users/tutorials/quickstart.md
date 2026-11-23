@@ -12,10 +12,10 @@ package, one console project, no services.
 ```shell
 dotnet new console -o ranges-demo
 cd ranges-demo
-dotnet add package EventfulRanges --version 0.0.1
+dotnet add package EventfulRanges --version 0.0.2
 ```
 
-If `0.0.1` is not on nuget.org yet, clone the repository and add the project
+To work against unreleased code, clone the repository and add the project
 reference instead:
 
 ```shell

@@ -88,7 +88,8 @@ pass `(timestamp, id)` order in instead.
 ## What is *not* decided here
 
 Convergence. This page is about one replica's algebra: given a set of intervals,
-which points are covered. Whether several replicas end up with the same answer,
-and how their operations are ordered, is the job of the operation log and the
-strategies — the next step in the
+which points are covered. Turning a history of operations into that set is the
+job of the strategies — which rank concurrent operations by `(timestamp, id)` —
+and keeping that history durable and ordered is the job of the log engine, the
+next step in the
 [port plan](../../developers/explanation/port-plan.md).

@@ -3,8 +3,9 @@
 Namespace `EventfulRanges` · assembly `EventfulRanges` · target framework
 `net10.0` · package `EventfulRanges` · license MPL-2.0.
 
-**Surface at 0.0.1:** interval algebra. `RangeSet`, `BoxSet`, the operation log
-and the stores arrive in `0.0.x`; `0.1.0` completes n-dimensional parity.
+**Surface at 0.0.2:** interval algebra, operations, clocks and strategies. The
+log engine, the stores and `RangeSet` arrive in `0.0.x`; `0.1.0` completes
+n-dimensional parity.
 
 Everything below is immutable and thread-safe. `Interval` and `Cover` are
 `readonly record struct`s with structural equality; every static method is pure.
@@ -20,6 +21,17 @@ Everything below is immutable and thread-safe. `Interval` and `Cover` are
 | `InvalidIntervalException` | `sealed class : ArgumentException` | Thrown by `EnsureValid` |
 | `Intervals` | `static class` | Set operations over collections of `Interval` |
 | `Cover` | `readonly record struct` | One piece of a swept union, with its winner |
+| `Op` | `sealed record` | One addition or removal on the line |
+| `OpKind` | `enum : byte` | `Add` or `Remove` |
+| `OpKindNames` | `static class` | Wire names for `OpKind` |
+| `OpError` | `enum` | Why an `Op` is not well-formed |
+| `InvalidOpException` | `sealed class : ArgumentException` | Thrown by `Op.EnsureValid` |
+| `IClock` | `interface` | Stamps new operations and observes remote ones |
+| `HybridClock`, `LamportClock` | `sealed class` | The two clocks |
+| `StrategyKind` | `enum : byte` | The four conflict-resolution rules |
+| `StrategyNames` | `static class` | Wire names for `StrategyKind` |
+| `Winner`, `Segment` | `readonly record struct` | Who decided which region |
+| `Strategies` | `static class` | Materializes a history into a set |
 | `ArgumentNullException` | — | Thrown by every `Intervals` method for a null argument |
 
 ## `Interval`
@@ -145,6 +157,93 @@ implementation and the on-the-wire names.
 | --- | --- | --- |
 | `Interval` | `Interval` | The piece |
 | `Index` | `int` | Index into the swept input of the interval that decided the piece |
+
+## `OpKind`
+
+| Member | Value | Wire name |
+| --- | --- | --- |
+| `OpKind.Add` | `0` | `"add"` |
+| `OpKind.Remove` | `1` | `"remove"` |
+
+`OpKindNames.ToWireName(OpKind)` throws `ArgumentOutOfRangeException` for an
+undefined value. `OpKindNames.TryParse(string?, out OpKind)` is case-sensitive.
+
+## `Op`
+
+`sealed record Op(string Id, OpKind Kind, Interval Interval, long Timestamp = 0, string? Origin = null)`
+
+| Member | Type | Meaning |
+| --- | --- | --- |
+| `Id` | `string` | Process-unique, roughly time-ordered |
+| `Kind` | `OpKind` | Add or remove |
+| `Interval` | `Interval` | The range the operation applies to |
+| `Timestamp` | `long` | Ordering stamp; `0` means not stamped yet |
+| `Origin` | `string?` | Optional producer |
+
+| Signature | Returns | Behaviour |
+| --- | --- | --- |
+| `Validate()` | `OpError` | First failing rule: `MissingId`, `UnknownKind`, `InvalidInterval` |
+| `EnsureValid()` | `void` | Throws `InvalidOpException` |
+| `Create(OpKind, Interval)` | `Op` | Fresh identifier |
+| `Add(double, double)` | `Op` | `[start, end]`, timestamp `0` |
+| `Add(double, double, Bound, Bound)` | `Op` | Explicit inclusivity |
+| `Remove(double, double)` | `Op` | `[start, end]`, timestamp `0` |
+| `Remove(double, double, Bound, Bound)` | `Op` | Explicit inclusivity |
+| `ToString()` | `string` | `add [1,5]` |
+
+`Op` is a record: `op with { Timestamp = 42 }` is how an engine stamps an
+operation, and the identifier is preserved.
+
+## `OpError` and `InvalidOpException`
+
+| `OpError` | Meaning |
+| --- | --- |
+| `None` | Well-formed |
+| `MissingId` | `Id` is null or empty |
+| `UnknownKind` | `Kind` is not a defined `OpKind` |
+| `InvalidInterval` | `Interval.Validate()` is not `None` |
+
+`InvalidOpException : ArgumentException` exposes `Op`, `Error` and
+`ParamName == "op"`.
+
+## Clocks
+
+| Signature | Behaviour |
+| --- | --- |
+| `IClock.Tick()` | Strictly increasing timestamp for a new local operation |
+| `IClock.Observe(long)` | Advances the clock past a timestamp seen elsewhere; never goes backwards |
+| `HybridClock(TimeProvider? = null)` | Wall clock in nanoseconds since the Unix epoch; two ticks in the same reading differ by 1; `TimeProvider.System` by default |
+| `LamportClock()` | Counts 1, 2, 3… from zero |
+
+## `StrategyKind`
+
+| Member | Wire name | Rule |
+| --- | --- | --- |
+| `Lww` | `"lww"` | Highest `(timestamp, id)` wins at each point |
+| `Fww` | `"fww"` | Lowest `(timestamp, id)` wins at each point |
+| `AdditiveWins` | `"additive-wins"` | Union of additions minus union of removals |
+| `GrowOnly` | `"grow-only"` | Union of additions; removals ignored |
+
+## `Winner` and `Segment`
+
+| Type | Members |
+| --- | --- |
+| `Winner` | `Timestamp`, `Id`, `Kind` |
+| `Segment` | `Interval`, `Winner` |
+
+## `Strategies`
+
+| Signature | Returns | Behaviour |
+| --- | --- | --- |
+| `Materialize(StrategyKind, IReadOnlyList<Op>)` | `IReadOnlyList<Interval>` | The strategy's canonical set; independent of the order of `ops`; throws `ArgumentOutOfRangeException` for an undefined strategy |
+| `Segments(StrategyKind, IReadOnlyList<Op>)` | `IReadOnlyList<Segment>` | Winner-annotated regions for `Lww` and `Fww`; empty for the others |
+| `CombineSegments(StrategyKind, IReadOnlyList<Segment>, IReadOnlyList<Segment>)` | `IReadOnlyList<Segment>` | Merges two canonical segment sets |
+| `ToIntervals(IReadOnlyList<Segment>)` | `IReadOnlyList<Interval>` | The regions decided by additions |
+| `IntervalsOf(IReadOnlyList<Op>, OpKind)` | `IReadOnlyList<Interval>` | Normalized intervals of one kind |
+
+Ranking order, in full: timestamp, then `string.CompareOrdinal` on the
+identifier, then the canonical interval order. The last step only matters when a
+log repeats an identifier; the engine deduplicates by id, so it never does.
 
 ## Invariants you can rely on
 

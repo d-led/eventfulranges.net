@@ -28,6 +28,9 @@ Requires the .NET 10 SDK (pinned in `global.json`) and `python3` for
 | `src/EventfulRanges/Intervals.Sweep.cs` | doubled-line sweep, lazy-deletion heap |
 | `src/EventfulRanges/Bound.cs`, `IntervalError.cs`, `InvalidIntervalException.cs` | inclusivity, validation vocabulary |
 | `src/EventfulRanges/Cover.cs` | one piece of a swept union |
+| `src/EventfulRanges/Op.cs`, `OpKind.cs`, `OpError.cs` | the operation and its wire kind |
+| `src/EventfulRanges/IClock.cs`, `HybridClock.cs`, `LamportClock.cs` | stamps |
+| `src/EventfulRanges/StrategyKind.cs`, `Strategies.cs`, `Winner.cs`, `Segment.cs` | conflict resolution |
 | `tests/EventfulRanges.Tests/` | xUnit behaviour tests; `Properties/` holds CsCheck oracle tests; `Support/` holds helpers |
 | `scripts/` | gate, CRAP, version bump, pack |
 | `.github/workflows/ci.yml` | build + tests on `main` and pull requests; quality gate on dispatch |
@@ -71,6 +74,9 @@ Requires the .NET 10 SDK (pinned in `global.json`) and `python3` for
 - **Docs change with the public surface.** When a public type or member changes,
   update `docs/users/reference/api.md` in the same change, and keep `llms.txt`
   and this file's map accurate.
+- **`README.md` uses absolute links only.** It is packed as the NuGet README and
+  rendered on nuget.org, where a relative link resolves to nothing;
+  `scripts/check-links.py` runs in the gate and enforces it.
 - **Publishing only from a tag.** Never `dotnet nuget push` by hand; the release
   workflow does it with Trusted Publishing (no stored key).
 - **License stays MPL-2.0** — a derived work; keep `NOTICE` accurate as more of
