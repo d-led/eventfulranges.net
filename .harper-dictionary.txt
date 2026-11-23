@@ -17,6 +17,7 @@ Lww
 MPL
 net10
 nuget
+permissive
 RTree
 Shouldly
 SourceLink

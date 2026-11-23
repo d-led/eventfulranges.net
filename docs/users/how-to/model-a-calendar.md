@@ -70,5 +70,6 @@ Intervals.Overlaps(
 The same two operations — add a range, remove a range — are the operation log of
 the CRDT. With `RangeSet` the same calendar becomes replicas that exchange
 operations instead of state: `RangeSet.AddAsync` and `RangeSet.RemoveAsync`
-append to a log, and the strategy materializes the set. See the
-[port plan](../../developers/explanation/port-plan.md) for what comes next.
+append to a log, and the strategy materializes the set. The
+[API reference](../reference/api.md) covers `RangeSet` and the box half that
+builds on the same model.

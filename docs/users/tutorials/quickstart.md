@@ -12,7 +12,7 @@ package, one console project, no services.
 ```shell
 dotnet new console -o ranges-demo
 cd ranges-demo
-dotnet add package EventfulRanges --version 0.0.2
+dotnet add package EventfulRanges --version 0.1.0
 ```
 
 To work against unreleased code, clone the repository and add the project
@@ -102,5 +102,6 @@ explains why that is the whole design.
   numbers, bookings, cancellations.
 - [API reference](../reference/api.md) — every type, method, default and
   exception.
-- Status: the [README](https://github.com/d-led/eventfulranges.net#readme) says
-  what the current release contains; `0.1.0` completes n-dimensional parity.
+- The [README](https://github.com/d-led/eventfulranges.net#readme) lists what
+  the current release contains; `0.1.0` ships the whole library, boxes
+  included.

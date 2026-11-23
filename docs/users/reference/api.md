@@ -3,9 +3,8 @@
 Namespace `EventfulRanges` · assembly `EventfulRanges` · target framework
 `net10.0` · package `EventfulRanges` · license MPL-2.0.
 
-**Published at 0.0.2:** interval algebra, operations, clocks and strategies.
-**On `main`, shipping in the next release:** the log engine, the memory and JSON
-Lines stores, and the `RangeSet` facade. `0.1.0` completes n-dimensional parity.
+Covers `0.1.0`, which ships the whole surface: the range half and the
+n-dimensional half.
 
 Everything below is immutable and thread-safe. `Interval` and `Cover` are
 `readonly record struct`s with structural equality; every static method is pure.
@@ -388,7 +387,7 @@ faces, axis by axis).
 | `Normalize(boxes)`, `Normalize(boxes, merge)` | Drops empty and absorbed boxes, joins the metadata of the absorbed, sorts |
 | `Union(first, second)` | The canonical cover of both |
 | `Difference(first, second)` | Exactly the points in the first and not the second; carved pieces keep their box's metadata |
-| `InsertNormalized(cover, box)` | Adds one box to a normalized cover without re-normalizing it |
+| `InsertNormalized(cover, box)` | Adds one box to a normalized cover without normalizing it again |
 | `MergeAdjacent(boxes)` | Merges every edge-adjacent pair, joining their metadata |
 | `Components(boxes)` | Maximal regions: overlapping, or sharing a face of positive measure |
 | `Contains(cover, point)`, `Overlaps(cover, box)`, `Equal(first, second)` | Questions about a cover |
@@ -398,8 +397,8 @@ faces, axis by axis).
 the first mergeable pair in canonical order and repeats. A pair whose shared face
 both sides exclude leaves a pinhole no single box can represent, so it stays apart.
 Above a few hundred boxes it merges the same cover through indexes instead of
-pairwise passes, which is what keeps a partition of thousands of cells quick; the
-two paths answer the same cover, so the choice is only ever about cost.
+pairwise passes, which is what keeps a partition of thousands of cells quick.
+The two paths answer the same cover, so the choice is only ever about cost.
 
 ### `BoxOp` and `BoxStrategies`
 

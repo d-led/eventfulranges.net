@@ -33,10 +33,9 @@ values — they are not equal, and `Intersection` keeps the stricter bound,
 `[0,5]`. Comparing ranges is not comparing their text.
 
 The 1-D default is **closed on both sides**, which matches how people talk about
-booked days and booked hours. The n-dimensional `Box`, arriving in `0.0.x`,
-defaults to **half-open** instead, because that makes set difference exact in
-more than one dimension. The asymmetry is deliberate; do not assume one from the
-other.
+booked days and booked hours. The n-dimensional `Box` defaults to **half-open**
+instead, because that makes set difference exact in more than one dimension. The
+asymmetry is deliberate; do not assume one from the other.
 
 ## A shared endpoint belongs to the intersection only when both sides include it
 
@@ -82,14 +81,13 @@ point just after it. On that line, a closed endpoint includes its point and an
 open one does not, and there are no special cases left to get wrong.
 
 `Intervals.Sweep` exposes the machinery, with the priority left to the caller —
-"higher index wins" is last-write-wins in miniature. In `0.0.x` the strategies
-pass `(timestamp, id)` order in instead.
+"higher index wins" is last-write-wins in miniature. The strategies pass
+`(timestamp, id)` order in instead.
 
 ## What is *not* decided here
 
 Convergence. This page is about one replica's algebra: given a set of intervals,
 which points are covered. Turning a history of operations into that set is the
-job of the strategies — which rank concurrent operations by `(timestamp, id)` —
-and keeping that history durable and ordered is the job of the log engine, the
-next step in the
-[port plan](../../developers/explanation/port-plan.md).
+job of the strategies, which rank concurrent operations by `(timestamp, id)`.
+Keeping that history durable and ordered is the job of the log engine; the
+[API reference](../reference/api.md) has the signatures.

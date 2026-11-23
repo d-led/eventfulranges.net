@@ -75,7 +75,7 @@ Requires the .NET 10 SDK (pinned in `global.json`) and `python3` for
 - **`AdditiveWinsLww` belongs to the n-D half.** `Strategies.Materialize`
   rejects it with `NotSupportedException`; `BoxStrategies.Layers` is a render
   recipe, not the cover.
-- **Intervals are permissive values.** Constructors do not throw; `Validate`
+- **An interval is a permissive value.** Constructors do not throw; `Validate`
   reports the problem, `EnsureValid` throws. Property tests need to build
   malformed values.
 - **Endpoints are compared, never combined.** No arithmetic on coordinates, no
