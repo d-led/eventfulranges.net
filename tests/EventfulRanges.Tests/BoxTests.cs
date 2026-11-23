@@ -52,6 +52,7 @@ public sealed class BoxTests
         new Box([0, 0], [1]).Validate().ShouldBe(BoxError.Dimensions);
         new Box([], []).Validate().ShouldBe(BoxError.NoDimensions);
         new Box([0], [1], [Bound.Closed, Bound.Open], null).Validate().ShouldBe(BoxError.Bounds);
+        new Box([0, 0], [1, 1], null, [Bound.Open]).Validate().ShouldBe(BoxError.Bounds);
         new Box([double.NaN], [1]).Validate().ShouldBe(BoxError.NotANumber);
         new Box([0], [double.PositiveInfinity]).Validate().ShouldBe(BoxError.NotFinite);
         new Box([2], [1]).Validate().ShouldBe(BoxError.Inverted);
@@ -62,6 +63,16 @@ public sealed class BoxTests
     public void An_empty_box_is_well_formed_because_normalizing_drops_it()
     {
         new Box([1], [1], [Bound.Open], [Bound.Open]).Validate().ShouldBe(BoxError.None);
+    }
+
+    [Fact]
+    public void An_open_box_excludes_both_endpoints()
+    {
+        var box = new Box([0], [2], [Bound.Open], [Bound.Open]);
+
+        box.Contains([0]).ShouldBeFalse();
+        box.Contains([1]).ShouldBeTrue();
+        box.Contains([2]).ShouldBeFalse();
     }
 
     [Fact]
@@ -81,6 +92,15 @@ public sealed class BoxTests
 
         new Box([0], [1], [Bound.Closed], [Bound.Closed]).Overlaps(right).ShouldBeTrue();
         new Box([0], [1]).Overlaps(right).ShouldBeFalse();
+    }
+
+    [Fact]
+    public void A_closed_point_does_not_overlap_a_box_that_excludes_it()
+    {
+        var point = new Box([0], [0], [Bound.Closed], [Bound.Closed]);
+
+        point.Overlaps(new Box([0], [1], [Bound.Open], [Bound.Open])).ShouldBeFalse();
+        point.Overlaps(new Box([0], [1], [Bound.Closed], [Bound.Open])).ShouldBeTrue();
     }
 
     [Fact]
@@ -142,6 +162,15 @@ public sealed class BoxTests
 
         closed.CompareTo(excluded).ShouldBeLessThan(0);
         excluded.CompareTo(closed).ShouldBeGreaterThan(0);
+    }
+
+    [Fact]
+    public void A_closed_upper_face_sorts_before_an_open_one()
+    {
+        var closedMax = new Box([0], [2], [Bound.Closed], [Bound.Closed]);
+        var openMax = new Box([0], [2]);
+
+        closedMax.CompareTo(openMax).ShouldBeLessThan(0);
     }
 
     [Fact]

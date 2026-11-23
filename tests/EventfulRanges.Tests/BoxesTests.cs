@@ -117,6 +117,53 @@ public sealed class BoxesTests
     }
 
     [Fact]
+    public void A_closed_box_absorbs_the_half_open_box_of_the_same_span()
+    {
+        var cover = Boxes.Normalize([new Box([0], [2]), ClosedSpan(0, 2)]);
+
+        cover.ShouldHaveSingleItem().Contains([2]).ShouldBeTrue();
+    }
+
+    [Fact]
+    public void Difference_keeps_the_face_the_second_cover_includes()
+    {
+        var rest = Boxes.Difference([ClosedSpan(0, 2)], [ClosedSpan(0, 1)]);
+
+        rest.ShouldHaveSingleItem().ShouldBe(new Box([1], [2], [Bound.Open], [Bound.Closed]));
+    }
+
+    [Fact]
+    public void Union_of_touching_closed_boxes_keeps_both_and_covers_the_shared_face()
+    {
+        var cover = Boxes.Union([ClosedSpan(0, 1)], [ClosedSpan(1, 2)]);
+
+        cover.Count.ShouldBe(2);
+        Boxes.Contains(cover, [0.5]).ShouldBeTrue();
+        Boxes.Contains(cover, [1]).ShouldBeTrue();
+        Boxes.Contains(cover, [1.5]).ShouldBeTrue();
+    }
+
+    [Fact]
+    public void Difference_in_two_dimensions_keeps_the_boundary_faces()
+    {
+        var rest = Boxes.Difference(
+            [new Box([0, 0], [2, 2], [Bound.Closed, Bound.Closed], [Bound.Closed, Bound.Closed])],
+            [new Box([0, 0], [2, 2], [Bound.Open, Bound.Open], [Bound.Open, Bound.Open])]);
+
+        Boxes.Contains(rest, [1, 1]).ShouldBeFalse();
+        Boxes.Contains(rest, [0, 1]).ShouldBeTrue();
+        Boxes.Contains(rest, [2, 1]).ShouldBeTrue();
+        Boxes.Contains(rest, [1, 0]).ShouldBeTrue();
+        Boxes.Contains(rest, [1, 2]).ShouldBeTrue();
+    }
+
+    [Fact]
+    public void Two_covers_that_differ_only_in_a_face_are_not_equal()
+    {
+        Boxes.Equal([ClosedSpan(0, 2)], [new Box([0], [2])]).ShouldBeFalse();
+    }
+
+    [Fact]
     public void Inserting_into_a_normalized_cover_keeps_it_normalized()
     {
         var cover = Boxes.InsertNormalized([new Box([0], [1]), new Box([5], [6])], new Box([2], [3]));
@@ -140,6 +187,9 @@ public sealed class BoxesTests
         Boxes.Overlaps(cover, new Box([9, 9], [20, 20])).ShouldBeTrue();
         Boxes.Overlaps(cover, new Box([10, 0], [20, 10])).ShouldBeFalse();
     }
+
+    private static Box ClosedSpan(double start, double end) =>
+        new([start], [end], [Bound.Closed], [Bound.Closed]);
 
     private static ImmutableArray<byte> Raw(string json) =>
         ImmutableArray.Create(Encoding.UTF8.GetBytes(json));
