@@ -12,9 +12,9 @@ namespace EventfulRanges;
 /// Every edit is an operation appended to a log, so the replica survives a restart
 /// and two replicas that saw the same operations answer the same cover.
 /// <para>
-/// Not here yet, and deliberately: layered views and compaction. The range facade
-/// has both because its engine snapshots; this one gains them together with the
-/// engine's snapshot support, rather than in a form nothing can use.
+/// Not here yet, and deliberately: compaction. The range facade has it because its
+/// engine snapshots; this one gains it together with the engine's snapshot support,
+/// rather than in a form nothing can use.
 /// </para>
 /// </remarks>
 public sealed class BoxSet : IDisposable
@@ -28,6 +28,12 @@ public sealed class BoxSet : IDisposable
 
     /// <summary>The current canonical cover.</summary>
     public IReadOnlyList<Box> Boxes => engine.Materialize();
+
+    /// <summary>
+    /// The layered front of the known operations, bottom to top — the view a painter
+    /// uses, where each region stays whole and later layers cover earlier ones.
+    /// </summary>
+    public IReadOnlyList<Layer> Layers => engine.Layers();
 
     /// <summary>Every known operation, sorted by identifier.</summary>
     public IReadOnlyList<BoxOp> Ops => engine.Ops;

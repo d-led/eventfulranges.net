@@ -138,6 +138,19 @@ public sealed class BoxEngine : IDisposable
         }
     }
 
+    /// <summary>
+    /// The layered front of the known operations, bottom to top: each region whole,
+    /// with anything a higher layer fully covers culled. Unlike <see cref="Materialize"/>
+    /// it is not shaped by the canonicalizer — a front is a painting order, not a cover.
+    /// </summary>
+    public IReadOnlyList<Layer> Layers()
+    {
+        lock (state)
+        {
+            return BoxStrategies.Layers(ops.Values.OrderBy(op => op.Id, StringComparer.Ordinal).ToList());
+        }
+    }
+
     /// <summary>Whether the materialized cover holds <paramref name="point"/>.</summary>
     public bool Contains(IReadOnlyList<double> point)
     {

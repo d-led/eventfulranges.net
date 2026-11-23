@@ -90,6 +90,42 @@ public static class BoxStrategies
     }
 
     /// <summary>
+    /// Projects the operations into a culled, layered front in bottom-to-top paint
+    /// order under last-write-wins priority: each box kept whole, with every box a
+    /// higher layer fully covers removed.
+    /// </summary>
+    /// <remarks>
+    /// It is the painter's-algorithm counterpart of <c>Materialize</c>.
+    /// Materialize returns a non-overlapping cover, so a small stroke inside a big box
+    /// carves that box into strips; the front keeps the big box whole and layers the
+    /// stroke on top. An erasing layer paints the background, and a later painting
+    /// layer covers an earlier erase exactly as a later stroke covers an earlier one.
+    /// </remarks>
+    public static IReadOnlyList<Layer> Layers(IReadOnlyList<BoxOp> ops)
+    {
+        ArgumentNullException.ThrowIfNull(ops);
+
+        var front = new List<Layer>();
+        var claimed = new List<Box>();
+        foreach (var op in Effective(ops)
+                     .OrderBy(op => new BoxWinner(op.Timestamp, op.Id, op.Kind), Comparer<BoxWinner>.Create(
+                         (left, right) => Preferred(StrategyKind.Lww, left, right) ? -1
+                             : Preferred(StrategyKind.Lww, right, left) ? 1
+                             : 0)))
+        {
+            var visible = Boxes.Difference([op.Box], claimed).Count > 0;
+            claimed = Boxes.InsertNormalized(claimed, op.Box).ToList();
+            if (visible)
+            {
+                front.Add(new Layer(op.Box, op.Kind));
+            }
+        }
+
+        front.Reverse();
+        return front;
+    }
+
+    /// <summary>
     /// Resolves retractions: drops every retraction and the operation each one
     /// names, leaving the rest in their original order.
     /// </summary>
