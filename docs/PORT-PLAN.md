@@ -99,7 +99,7 @@ the time goes into *discovering* which invariant a failing shrink violates.
 | **P6** indexed merge *(conditional)* | 8 | port `merge_index.go`, hold it to `scanMerge`'s output, re-derive the 2048 threshold with BenchmarkDotNet |
 | **P7** KurrentDB package | 5 | `EventfulRanges.Kurrent` against `KurrentDB.Client` 1.6.1; reuse this repo's `docker-compose.yml` for the integration test |
 | **P8** quality gate | 6 | 100% line coverage per library project, Stryker break-at-80, analyzers clean, `dotnet format --verify-no-changes`, stress test under `--blame-hang` |
-| **P9** docs + publish | 5 | translated deep-dive docs, XML doc comments, docfx site, hello/local/pubsub samples (`System.Threading.Channels`), NuGet Trusted Publishing on tag |
+| **P9** docs + publish | 5 | translated deep-dive docs, XML doc comments, docfx site, hello/local/pubsub samples (`System.Threading.Channels`), the tag-triggered release workflow (GitHub Packages mirror, then nuget.org) |
 
 Checkpoints: **`0.0.1`** is the interval foundation (shipped); `0.0.2` up to
 `0.0.9` carry the engine, the stores, the facade and the n-dimensional half;
@@ -289,5 +289,6 @@ quality gate** (keeps PR checks fast) and the **real-server integration job**
 5. Losing the oracle. The Go tests are only an oracle because they compare
    against an *independent* implementation. A C# port that tests itself against
    itself proves nothing — hence the brute-force reference and the Go fixtures.
-6. NuGet ID availability and Trusted Publishing setup (OIDC) — 1 day, easy to
-   forget until release day.
+6. NuGet ID availability and the publish secret — publish `0.0.1` early to claim
+   the ID (it is permanent), keep `NUGET_API_KEY` in the repository secrets, and
+   switch to OIDC Trusted Publishing only if the publisher gets registered.

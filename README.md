@@ -23,6 +23,11 @@ model, the same quality bar, an API that reads like C# rather than like Go.
 dotnet add package EventfulRanges --version 0.0.1
 ```
 
+Every tagged version is also mirrored to GitHub Packages
+(`https://nuget.pkg.github.com/d-led/index.json`). That feed requires credentials
+even for a public package, so `dotnet add package` works anonymously only from
+nuget.org; the mirror exists for CI and for keeping a copy of each tag.
+
 Build from source:
 
 ```shell

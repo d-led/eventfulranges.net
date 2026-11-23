@@ -9,6 +9,8 @@ on:
 
 permissions:
   contents: read
+  # For the GitHub Packages mirror below.
+  packages: write
 
 jobs:
   publish:
@@ -33,6 +35,18 @@ jobs:
 
       - name: Pack
         run: ./scripts/pack.sh
+
+      # The mirror goes first: if nuget.org rejects the push, the bits are still
+      # reachable from the repository, and a retry is idempotent either way.
+      # GitHub's NuGet feed has no symbol server, so only the package is mirrored.
+      - name: Mirror to GitHub Packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          dotnet nuget push "build/packages/*.nupkg" \
+            --api-key "${GITHUB_TOKEN}" \
+            --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+            --skip-duplicate
 
       - name: Publish to NuGet
         env:
