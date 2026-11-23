@@ -295,7 +295,8 @@ quality gate** (keeps PR checks fast) and the **real-server integration job**
    100% and weakening tests to get there.
 5. Losing the oracle. The Go tests are only an oracle because they compare
    against an *independent* implementation. A C# port that tests itself against
-   itself proves nothing — hence the brute-force reference and the Go fixtures.
+   itself proves nothing — hence the independently written brute-force
+   reference.
 6. NuGet ID availability and the publish policy — publish `0.0.1` early to claim
    the ID (it is permanent), register the Trusted Publishing policy instead of
    storing an API key, and remember a policy on a private repository only stays
