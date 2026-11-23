@@ -24,6 +24,9 @@ public static class Strategies
                 IntervalsOf(ops, OpKind.Add),
                 IntervalsOf(ops, OpKind.Remove)),
             StrategyKind.GrowOnly => IntervalsOf(ops, OpKind.Add),
+            StrategyKind.AdditiveWinsLww => throw new NotSupportedException(
+                "AdditiveWinsLww resolves each point's metadata and is the n-dimensional strategy; " +
+                "a range carries no metadata for a point to resolve."),
             _ => throw new ArgumentOutOfRangeException(nameof(strategy), strategy, "Unknown strategy."),
         };
     }

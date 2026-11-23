@@ -23,6 +23,14 @@ public enum StrategyKind : byte
     /// <summary>The union of every addition; removals are ignored.</summary>
     [JsonStringEnumMemberName("grow-only")]
     GrowOnly = 3,
+
+    /// <summary>
+    /// The union of every addition minus every removal, with each point's metadata
+    /// decided by the latest addition covering it. It is the n-dimensional
+    /// strategy: a range carries no metadata for a point to resolve.
+    /// </summary>
+    [JsonStringEnumMemberName("additive-wins-lww")]
+    AdditiveWinsLww = 4,
 }
 
 /// <summary>
@@ -39,6 +47,7 @@ public static class StrategyNames
         StrategyKind.Fww => "fww",
         StrategyKind.AdditiveWins => "additive-wins",
         StrategyKind.GrowOnly => "grow-only",
+        StrategyKind.AdditiveWinsLww => "additive-wins-lww",
         _ => throw new ArgumentOutOfRangeException(nameof(strategy), strategy, "Unknown strategy."),
     };
 
@@ -58,6 +67,9 @@ public static class StrategyNames
                 return true;
             case "grow-only":
                 strategy = StrategyKind.GrowOnly;
+                return true;
+            case "additive-wins-lww":
+                strategy = StrategyKind.AdditiveWinsLww;
                 return true;
             default:
                 strategy = default;
