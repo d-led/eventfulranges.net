@@ -61,6 +61,17 @@ public sealed class EngineTests
     }
 
     [Fact]
+    public void An_operation_that_already_carries_a_timestamp_keeps_it()
+    {
+        using var engine = Open(new MemoryLog(), StrategyKind.Lww, NoAutoSnapshots);
+        var stamped = Op.Add(1, 5) with { Timestamp = 7 };
+
+        var stored = Run(engine.ApplyAsync(stamped));
+
+        stored.Timestamp.ShouldBe(7);
+    }
+
+    [Fact]
     public void A_duplicate_identifier_is_ignored()
     {
         var log = new MemoryLog();

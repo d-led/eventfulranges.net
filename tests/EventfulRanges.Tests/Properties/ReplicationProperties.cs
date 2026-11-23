@@ -26,9 +26,15 @@ public sealed class ReplicationProperties
 
     private static readonly string[] Ids = { "a", "b", "c", "d", "e", "f" };
 
+    /// <summary>
+    /// A replicated operation carries the stamp it was created with. An
+    /// unstamped one is stamped by whichever replica accepts it first, so two
+    /// replicas that accept the same unstamped operation cannot agree — that
+    /// is why a log only ever holds stamped operations.
+    /// </summary>
     private static readonly Gen<Op> GenOp =
         from interval in GenInterval
-        from timestamp in Gen.Long[0, 3]
+        from timestamp in Gen.Long[1, 3]
         from id in Gen.Int[0, 5]
         from isAdd in Gen.Bool
         select new Op(Ids[id], isAdd ? OpKind.Add : OpKind.Remove, interval, timestamp);
