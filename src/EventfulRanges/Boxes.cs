@@ -12,7 +12,7 @@ namespace EventfulRanges;
 /// belongs to the result exactly when it belongs to the first cover and not the
 /// second — so both sides of a boundary keep the face inclusivity they had.
 /// </remarks>
-public static class Boxes
+public static partial class Boxes
 {
     /// <summary>
     /// The canonical cover of <paramref name="boxes"/>, joining metadata with
