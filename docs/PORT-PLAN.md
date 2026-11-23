@@ -289,6 +289,7 @@ quality gate** (keeps PR checks fast) and the **real-server integration job**
 5. Losing the oracle. The Go tests are only an oracle because they compare
    against an *independent* implementation. A C# port that tests itself against
    itself proves nothing — hence the brute-force reference and the Go fixtures.
-6. NuGet ID availability and the publish secret — publish `0.0.1` early to claim
-   the ID (it is permanent), keep `NUGET_API_KEY` in the repository secrets, and
-   switch to OIDC Trusted Publishing only if the publisher gets registered.
+6. NuGet ID availability and the publish policy — publish `0.0.1` early to claim
+   the ID (it is permanent), register the Trusted Publishing policy instead of
+   storing an API key, and remember a policy on a private repository only stays
+   active for 7 days until the first successful publish.

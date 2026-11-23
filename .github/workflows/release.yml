@@ -9,6 +9,8 @@ on:
 
 permissions:
   contents: read
+  # GitHub OIDC token, exchanged by nuget.org for a short-lived key.
+  id-token: write
   # For the GitHub Packages mirror below.
   packages: write
 
@@ -48,9 +50,24 @@ jobs:
             --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
             --skip-duplicate
 
+      # Trusted Publishing: there is no long-lived key to store or rotate.
+      # nuget.org checks GitHub's signed OIDC token against a policy and issues
+      # a one-hour key, so the login must sit right before the push.
+      #
+      # One-time setup on nuget.org (Trusted Publishing → add policy):
+      #   repository owner  d-led
+      #   repository        eventfulranges.net
+      #   workflow file     release.yml
+      - name: NuGet login (OIDC to a temporary key)
+        id: login
+        uses: NuGet/login@v1
+        with:
+          # The nuget.org profile name, not the email address.
+          user: d-led
+
       - name: Publish to NuGet
         env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
         run: |
           dotnet nuget push "build/packages/*.nupkg" \
             --api-key "${NUGET_API_KEY}" \

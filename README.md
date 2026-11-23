@@ -92,3 +92,8 @@ build, every test with coverage, and the CRAP budget.
 
 Mozilla Public License 2.0. A derived work of
 [eventfulranges](https://github.com/d-led/eventfulranges); see [NOTICE](NOTICE).
+
+## Releasing
+
+Publishing happens only from a version tag, through NuGet Trusted Publishing —
+no API key is stored or rotated. See [docs/RELEASING.md](docs/RELEASING.md).
