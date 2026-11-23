@@ -106,6 +106,16 @@ public sealed class LineTests
     }
 
     [Fact]
+    public void A_stationary_point_on_a_closed_upper_face_is_inside()
+    {
+        var closed = new Box([0, 0], [2, 2], [Bound.Closed, Bound.Closed], [Bound.Closed, Bound.Closed]);
+        var open = new Box([0, 0], [2, 2], [Bound.Open, Bound.Open], [Bound.Open, Bound.Open]);
+
+        new Line([2, 2], [2, 2]).Crossing(closed).ShouldBe(new LineSpan(0, 1));
+        new Line([2, 2], [2, 2]).Crossing(open).ShouldBeNull();
+    }
+
+    [Fact]
     public void A_line_of_another_dimensionality_crosses_nothing()
     {
         new Line([0], [1]).Crossing(Square(0, 4)).ShouldBeNull();
