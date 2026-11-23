@@ -12,6 +12,8 @@ namespace EventfulRanges;
     WriteIndented = false,
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
 [JsonSerializable(typeof(Op))]
+[JsonSerializable(typeof(Box))]
+[JsonSerializable(typeof(BoxOp))]
 [JsonSerializable(typeof(SnapshotDocument))]
 [JsonSerializable(typeof(SnapshotMarker))]
 [JsonSerializable(typeof(SnapshotLine))]

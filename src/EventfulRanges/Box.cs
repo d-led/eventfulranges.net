@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Text.Json.Serialization;
 
 namespace EventfulRanges;
 
@@ -16,6 +17,7 @@ namespace EventfulRanges;
 /// cref="CompareTo(Box)"/> describe geometry only; <see cref="Meta"/> is opaque
 /// JSON that the algebra joins when boxes merge, never part of a box's identity.
 /// </remarks>
+[JsonConverter(typeof(BoxJsonConverter))]
 public sealed class Box : IEquatable<Box>, IComparable<Box>
 {
     /// <summary>Whether the boxes cover the same region.</summary>
