@@ -187,6 +187,137 @@ public static class Boxes
     }
 
     /// <summary>
+    /// Merges every pair of boxes that touch edge to edge and agree on every
+    /// other axis, so the cover no longer contains such a pair. The covered
+    /// points do not change, and the metadata of two merged boxes is joined into
+    /// the box that replaces them.
+    /// </summary>
+    /// <remarks>
+    /// The greedy takes the first mergeable pair in canonical cover order and
+    /// repeats until none is left, which makes the result deterministic but not
+    /// a provably minimal rectangle cover. It is safe to use as a
+    /// <see cref="Canonicalizer"/> for that reason. A pair of boxes that touch
+    /// with both faces open leaves a pinhole between them, which one box cannot
+    /// represent, so such a pair stays apart.
+    /// </remarks>
+    public static IReadOnlyList<Box> MergeAdjacent(IReadOnlyList<Box> boxes)
+    {
+        ArgumentNullException.ThrowIfNull(boxes);
+
+        var cover = Normalize(boxes).ToList();
+        while (FirstMergeablePair(cover) is { } pair)
+        {
+            cover.RemoveAt(pair.Second);
+            cover.RemoveAt(pair.First);
+            cover = InsertNormalized(cover, pair.Merged).ToList();
+        }
+
+        return cover;
+    }
+
+    /// <summary>
+    /// The first pair in canonical order that merges, with the box it becomes;
+    /// <c>null</c> when the cover holds no such pair.
+    /// </summary>
+    private static (int First, int Second, Box Merged)? FirstMergeablePair(List<Box> cover)
+    {
+        for (var first = 0; first < cover.Count; first++)
+        {
+            for (var second = first + 1; second < cover.Count; second++)
+            {
+                if (Merge(cover[first], cover[second]) is Box merged)
+                {
+                    return (first, second, merged);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// The box the pair becomes, or <c>null</c> when they do not merge: two boxes
+    /// merge when they differ on exactly one axis and meet there without leaving
+    /// a pinhole between them.
+    /// </summary>
+    private static Box? Merge(Box first, Box second)
+    {
+        if (first.Dimensions != second.Dimensions)
+        {
+            return null;
+        }
+
+        var axis = OnlyDifferingAxis(first, second);
+        if (axis < 0 || Touching(first, second, axis) is not { } pair || LeavesAPinhole(pair, axis))
+        {
+            return null;
+        }
+
+        return new Box(pair.Low.Min, pair.High.Max, pair.Low.MinBound, pair.High.MaxBound)
+            .WithMeta(Meta.Union(first.Meta, second.Meta));
+    }
+
+    /// <summary>
+    /// The pair ordered so that <paramref name="axis"/> ends for the low box where
+    /// it begins for the high one, or <c>null</c> when they leave a gap or overlap
+    /// there.
+    /// </summary>
+    private static (Box Low, Box High)? Touching(Box first, Box second, int axis)
+    {
+        if (first.Max[axis] == second.Min[axis])
+        {
+            return (first, second);
+        }
+
+        return second.Max[axis] == first.Min[axis] ? (second, first) : null;
+    }
+
+    /// <summary>
+    /// Whether both boxes exclude the face they share, which leaves a point out of
+    /// the union that no single box can represent.
+    /// </summary>
+    private static bool LeavesAPinhole((Box Low, Box High) pair, int axis) =>
+        pair.Low.HighestBound(axis) == Bound.Open && pair.High.LowestBound(axis) == Bound.Open;
+
+    /// <summary>
+    /// The one axis on which the boxes differ, or -1 when they differ on no axis
+    /// or on more than one. Boxes that agree on a span but not on its faces count
+    /// as differing there, so they never merge.
+    /// </summary>
+    private static int OnlyDifferingAxis(Box first, Box second)
+    {
+        var differing = -1;
+        for (var axis = 0; axis < first.Dimensions; axis++)
+        {
+            if (AgreeOnSpan(first, second, axis))
+            {
+                if (!AgreeOnFaces(first, second, axis))
+                {
+                    return -1;
+                }
+
+                continue;
+            }
+
+            if (differing >= 0)
+            {
+                return -1;
+            }
+
+            differing = axis;
+        }
+
+        return differing;
+    }
+
+    private static bool AgreeOnSpan(Box first, Box second, int axis) =>
+        first.Min[axis] == second.Min[axis] && first.Max[axis] == second.Max[axis];
+
+    private static bool AgreeOnFaces(Box first, Box second, int axis) =>
+        first.LowestBound(axis) == second.LowestBound(axis)
+        && first.HighestBound(axis) == second.HighestBound(axis);
+
+    /// <summary>
     /// The disjoint boxes covering <paramref name="box"/> without
     /// <paramref name="carved"/>. The sweep visits one axis at a time and keeps
     /// a worklist of the pieces still inside the carved box on the axes already
