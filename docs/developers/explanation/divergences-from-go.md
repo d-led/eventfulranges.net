@@ -42,6 +42,29 @@ Pinned on this side by `IntervalTests.A_point_interval_does_not_overlap_the_rang
 in Go by the degenerate cases in `TestOverlaps`, `TestTouches` and
 `TestIntersection`.
 
+## 2. Names that would collide in C#
+
+The n-dimensional query shape is `Line` here and `Path` in the original. A type
+named `Path` in this namespace shadows `System.IO.Path`, and the library's own
+`JsonlLog` failed to compile on it the first time the type existed — so the name is
+not a preference but a defect avoided. The span of a line is `LineSpan` for the same
+reason (`Span<T>`), and the documentation of both names the original's word.
+
+`RTree` has one build rather than the original's two: the original's second build
+exists to avoid copying the caller's boxes, and `Box` is immutable, so the copy
+never has to happen. `Search` sorts by `Box.CompareTo` — the library's canonical
+cover order — where the original sorts by a different total order that groups
+corners; the original's own documentation calls its order "canonical", which it is
+not.
+
+## 3. Where the original drops what it has copied
+
+`RTree.Build` drops empty boxes **before** validating them, as the original does:
+an inverted box holds no point, so it cannot be indexed, and validating what will
+not be kept would only reject input the builder can handle. A malformed box — a
+NaN coordinate — is still refused. Both halves are pinned by tests, because the
+ordering reads like an oversight until it is written down.
+
 ## Deliberate non-divergences so far
 
 - Textual formatting is .NET's shortest round-trip (`1.5`, not `1.500000`), and

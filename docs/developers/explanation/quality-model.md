@@ -36,8 +36,9 @@ answers are: split it, test it, or both. A method deliberately kept as a table o
 one-line cases can be named in `DISPATCH_TABLES` inside `crap.py` — it is then
 printed but not counted, so a table that grows into logic cannot hide.
 
-The current numbers: 147 tests, 179 methods measured, 0 uncovered, average CRAP
-2.6, nothing over budget.
+The current numbers: 313 tests, 407 methods measured, 10 uncovered, average CRAP
+2.6, nothing over budget. The uncovered ones are `ToString`/`Equals` overrides and
+the rare error path of a log that has already moved on.
 
 ## Behaviour tests
 

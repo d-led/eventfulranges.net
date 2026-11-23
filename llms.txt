@@ -1,8 +1,8 @@
 # EventfulRanges
 
-> A CRDT for real-valued ranges in C# on .NET 10: replicas add and remove ranges, exchange operations, and converge to the same set in any arrival order.
+> A CRDT for real-valued ranges and n-dimensional regions in C# on .NET 10: replicas add and remove them, exchange operations, and converge to the same set in any arrival order.
 
-Package `EventfulRanges` · namespace `EventfulRanges` · target `net10.0` · license MPL-2.0 · published `0.0.2` (intervals, operations, clocks, strategies); `main` also carries the engine, the stores and `RangeSet`.
+Package `EventfulRanges` · namespace `EventfulRanges` · target `net10.0` · license MPL-2.0 · published `0.0.3` (the 1-D CRDT end to end); `main` also carries the whole n-dimensional half — boxes, box strategies, `BoxEngine`, `BoxSet`, `RTree` — which becomes `0.1.0`.
 
 ## Reference (exact specs)
 

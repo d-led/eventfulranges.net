@@ -11,11 +11,13 @@ ends up with the same set — no coordinator, no consensus, any arrival order.
 A port of [eventfulranges](https://github.com/d-led/eventfulranges): the same
 model, the same quality bar, an API that reads like C# rather than like Go.
 
-> **Status: `0.0.2` is published; the 1-D CRDT is complete on `main`.** Published
-> so far: per-side inclusivity, the unit of change (`Op`), clocks and the four
-> conflict-resolution strategies. `main` adds the log engine, the memory and JSON
-> Lines stores and the `RangeSet` replica facade — they ship in the next release.
-> **N-dimensional parity is `0.1.0`**, and nothing reaches `0.1` before it.
+> **Status: `0.0.3` is published; the n-dimensional half is complete on `main`.**
+> Published so far: intervals, operations, clocks, the four range strategies, the
+> log engine, its memory and JSON Lines stores, and the `RangeSet` replica facade.
+> `main` adds the whole n-dimensional half — boxes, the box algebra, retraction,
+> the five box strategies, layered views, line queries, an R-tree and `BoxSet`.
+> **`0.1.0` is the n-dimensional parity release**, and the only version worth
+> pinning before it is `0.0.3`.
 
 ## Install
 
@@ -34,6 +36,12 @@ dotnet add package EventfulRanges
 | Log engine | `Engine`, `EngineOptions` |
 | Stores | `IEventLog`, `MemoryLog`, `JsonlLog` |
 | Replica facade | `RangeSet` |
+| Boxes | `Box`, `Boxes`, `Meta`, `Canonicalizers` |
+| Box operations | `BoxOp`, `BoxOpKind`, `BoxOpError`, `InvalidBoxOpException` |
+| Box strategies | `BoxStrategies`, `BoxSegment`, `BoxWinner`, `Layer` |
+| Box engine and stores | `BoxEngine`, `BoxEngineOptions`, `IBoxLog`, `BoxMemoryLog`, `BoxJsonlLog` |
+| Region queries | `Line`, `LineSpan`, `LineSegment`, `RTree` |
+| Box replica facade | `BoxSet` |
 
 Two replicas holding the same operations converge whatever order they arrive in:
 

@@ -315,6 +315,103 @@ catch-up and up to three retries before the exception surfaces.
 | `SnapshotAsync(...)`, `CompactAsync(...)` | Forwarded to the engine |
 | `Dispose()` | Releases the engine |
 
+## The n-dimensional half
+
+The same model over boxes: an axis-aligned region whose every face is included or
+excluded. Everything below mirrors the range types one dimension up.
+
+| Type | Kind | Purpose |
+| --- | --- | --- |
+| `Box` | `sealed class` | An n-dimensional region with per-face inclusivity |
+| `BoxError` | `enum` | Why a box is not well-formed |
+| `InvalidBoxException` | `sealed class : ArgumentException` | A box was required to be well-formed |
+| `Boxes` | `static class` | The cover algebra: normalize, union, exact difference, insertion, merge, components |
+| `Meta` / `MetaMerge` | `static class` / `delegate` | The metadata join: keys from either side, scalars by raw bytes |
+| `Canonicalizer` / `Canonicalizers` | `delegate` / `static class` | Cover-preserving rewrites, and `Chain` |
+| `Line`, `LineSpan`, `LineSegment` | classes and a `record struct` | Region queries: what a straight segment crosses |
+| `BoxOp`, `BoxOpKind`, `BoxOpError`, `InvalidBoxOpException` | `sealed record`, enums, exception | Add, remove, or retract a box |
+| `BoxStrategies`, `BoxSegment`, `BoxWinner`, `Layer` | `static class`, records | Materialization, and the painter's front |
+| `IBoxLog`, `BoxMemoryLog`, `BoxJsonlLog`, `BoxLogReadResult` | interface and classes | The box log |
+| `BoxEngine`, `BoxEngineOptions`, `DimensionMismatchException` | `sealed class`, `record`, exception | Applies box operations, owns the cover |
+| `BoxSet` | `sealed class : IDisposable` | The n-dimensional facade |
+| `RTree` | `sealed class` | A static spatial index over a cover |
+
+### `Box`
+
+`new Box(min, max)` is half-open — every lower face closed, every upper face open.
+`new Box(min, max, minBound, maxBound)` sets the faces; an empty bound list means
+the default. `Validate()` names one problem (`BoxError.Dimensions`, `NoDimensions`,
+`Bounds`, `NotANumber`, `NotFinite`, `Inverted`) and `EnsureValid()` throws
+`InvalidBoxException`.
+
+Emptiness is a **value**, not a fault: `IsEmpty` is true for an inverted box or for
+one whose corners meet on an open face, and `Boxes.Normalize` drops those rather
+than rejecting them. `Contains(point)`, `Contains(box)`, `Overlaps(box)`,
+`LowestBound(axis)`, `HighestBound(axis)`, `WithMeta(...)` answer the rest.
+`Equals` and `CompareTo` describe geometry only — metadata is never part of a box's
+identity, and `CompareTo` is canonical cover order (lower corner, upper corner,
+faces, axis by axis).
+
+### `Boxes`
+
+| Signature | Behaviour |
+| --- | --- |
+| `Normalize(boxes)`, `Normalize(boxes, merge)` | Drops empty and absorbed boxes, joins the metadata of the absorbed, sorts |
+| `Union(first, second)` | The canonical cover of both |
+| `Difference(first, second)` | Exactly the points in the first and not the second; carved pieces keep their box's metadata |
+| `InsertNormalized(cover, box)` | Adds one box to a normalized cover without re-normalizing it |
+| `MergeAdjacent(boxes)` | Merges every edge-adjacent pair, joining their metadata |
+| `Components(boxes)` | Maximal regions: overlapping, or sharing a face of positive measure |
+| `Contains(cover, point)`, `Overlaps(cover, box)`, `Equal(first, second)` | Questions about a cover |
+| `Crossed(cover, line)`, `Traverse(cover, line)` | Region queries: what a segment meets, and how coverage changes along it |
+
+`MergeAdjacent` is a deterministic greedy, not a minimal rectangle cover: it takes
+the first mergeable pair in canonical order and repeats. A pair whose shared face
+both sides exclude leaves a pinhole no single box can represent, so it stays apart.
+
+### `BoxOp` and `BoxStrategies`
+
+`BoxOp.Add(min, max)`, `AddWithBounds(...)`, `Remove(...)`, `RemoveWithBounds(...)`
+build edits; `BoxOp.Retract(operationId, box)` cancels one named edit, carrying the
+box of the operation it undoes. Wire names are `add`, `remove`, `retract`, and the
+JSON fields are `id`, `kind`, `box`, `ts`, `ref`, `origin`.
+
+`BoxStrategies.Effective(ops)` drops each retraction and its target; retraction is
+single-level, so retracting a retraction changes nothing. `Materialize(strategy, ops)`
+projects the log under any of the five strategies — `Lww`, `Fww`, `AdditiveWins`,
+`GrowOnly`, and `AdditiveWinsLww`, which resolves each point's metadata by the latest
+addition covering it. `Layers(ops)` returns the painter's front instead: whole
+regions bottom to top, with only fully hidden ones culled.
+
+`AdditiveWinsLww` is the n-dimensional strategy. `Strategies.Materialize` (the range
+half) rejects it with a `NotSupportedException` naming the reason.
+
+### `BoxEngine` and `BoxSet`
+
+```csharp
+using var wall = await BoxSet.OpenAsync("./wall", StrategyKind.AdditiveWinsLww);
+await wall.AddAsync([0, 0], [10, 10]);
+await wall.RemoveAsync([3, 3], [5, 5]);
+var crossed = wall.Crossed(new Line([0, 5], [10, 5]));
+```
+
+`BoxSet.OpenAsync(directory, strategy)` keeps the history in
+`boxes.stream.jsonl`; `OpenLogAsync(IBoxLog, strategy)` takes any box log.
+`BoxEngineOptions` carries the `Clock`, the `Canonicalizer` that shapes the cover
+before it is returned, and the `MetaMerge` used when boxes combine.
+
+The engine rejects an operation of another dimensionality
+(`DimensionMismatchException`) — a replica is one space, and the first operation
+fixes it — and surfaces a log that moved on as `StoreConflictException` with the
+cover untouched.
+
+### `RTree`
+
+`RTree.Build(boxes)` bulk-loads a static index by median split on the widest axis;
+`Search(query)` returns the boxes sharing a point with it in canonical order, while
+`SearchInTraversalOrder(query)` skips the sort. Boxes are immutable, so a tree
+stores them directly and needs no copying variant.
+
 ## Invariants you can rely on
 
 - `Normalize` output is sorted by `Less`, contains no empty interval, and no two
@@ -326,6 +423,13 @@ the same operations in another order, or received them from another replica,
 answers the same.
 - An operation reaches the view only after the log accepted it; a rejected append
 leaves the view unchanged.
+- `Boxes.Normalize` is idempotent and order-independent, and `Boxes.Equal`
+  compares the normalized covers point for point.
+- `Boxes.Difference` is exact at the boundary: a box carved by an open-faced
+  neighbour keeps the faces that neighbour excludes.
+- `BoxStrategies.Materialize` answers the same for every arrival order, and
+  `Layers` runs bottom to top, so a painter drawing the list in order gets the
+  same front.
 - Every returned value is a fresh, immutable value; nothing aliases internal
   state.
 

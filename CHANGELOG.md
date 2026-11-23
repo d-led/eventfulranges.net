@@ -3,6 +3,29 @@
 Versioning: `0.0.x` while the library is being ported. `0.1.0` is the
 n-dimensional parity release — the first version with the whole surface.
 
+## Unreleased — the n-dimensional half
+
+The same CRDT over boxes: regions in any number of dimensions, each face included
+or excluded, with retraction and layered views.
+
+- `Box` with per-face inclusivity, validation, geometry-only equality and canonical
+  order; `Boxes` with normalize, union, exact difference, insertion, adjacent merge
+  and connected components.
+- `Meta`/`MetaMerge`: the metadata join — keys from either side, nested objects
+  joined, scalars resolved by raw bytes so every replica agrees.
+- `Canonicalizer`/`Canonicalizers.Chain`: the cover-preserving seam the engine
+  shapes its view through.
+- `Line`, `LineSpan`, `LineSegment` with `Boxes.Crossed` and `Boxes.Traverse`:
+  region queries by a straight segment, with the box's half-open convention.
+- `BoxOp` with `Retract`, five box strategies including `AdditiveWinsLww`, and
+  `Layers` for the painter's front.
+- `BoxEngine`, `BoxMemoryLog`, `BoxJsonlLog` and the `BoxSet` facade: an
+  n-dimensional replica that persists and survives a restart.
+- `RTree`: a static, bulk-loaded spatial index over a cover.
+
+Tested to the same bar as the range half: oracle property tests over the algebra,
+replication properties, and a CRAP budget of 10 that every method meets.
+
 ## 0.0.3
 
 The 1-D CRDT end to end: a replica that persists, converges and restarts.
