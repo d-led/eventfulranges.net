@@ -3,6 +3,28 @@
 Versioning: `0.0.x` while the library is being ported. `0.1.0` is the
 n-dimensional parity release — the first version with the whole surface.
 
+## Unreleased
+
+The 1-D CRDT end to end: a replica that persists, converges and restarts.
+
+- `IEventLog` with the optional `ISnapshotStore`, `ICompactableLog` and the
+  combined `IEventStore`; `LogReadResult`, `SnapshotReadResult`,
+  `StoreConflictException`, `SnapshotNotFoundException`.
+- `MemoryLog` and `JsonlLog`: the whole store surface. The stream is
+  `ranges.stream.jsonl`, one operation per line, snapshots embedded as
+  `{"snapshot":{"version":N,"data":{…}}}`, compaction through a temporary file
+  and a rename.
+- `Engine` and `EngineOptions`: versioned append with catch-up and retries,
+  stamped operations, a cached view, snapshots and compaction. Appends are
+  serialized by one async gate, so concurrent callers of one engine cannot race
+  each other; a store conflict from another writer is caught up and retried.
+- `RangeSet`: `AddAsync`, `RemoveAsync`, `AddWithBoundsAsync`,
+  `RemoveWithBoundsAsync`, `ApplyAsync`, `ApplyAllAsync`, `Ranges`, `Contains`,
+  `Overlaps`, `Ops`, `SnapshotAsync`, `CompactAsync`.
+- JSON is source-generated, so the package stays trimming- and AOT-safe, and the
+  wire names are the original's: `id`, `kind`, `interval`, `ts`, `origin`, with
+  `"closed"`/`"open"` for bounds.
+
 ## 0.0.2
 
 Operations, clocks and strategies: the step from algebra to CRDT events.

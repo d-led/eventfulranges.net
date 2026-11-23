@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text.Json.Serialization;
 
 namespace EventfulRanges;
 
@@ -15,11 +16,11 @@ namespace EventfulRanges;
 /// </param>
 /// <param name="Origin">Who produced the operation, when the producer says so.</param>
 public sealed record Op(
-    string Id,
-    OpKind Kind,
-    Interval Interval,
-    long Timestamp = 0,
-    string? Origin = null)
+    [property: JsonPropertyName("id")] string Id,
+    [property: JsonPropertyName("kind")] OpKind Kind,
+    [property: JsonPropertyName("interval")] Interval Interval,
+    [property: JsonPropertyName("ts")] long Timestamp = 0,
+    [property: JsonPropertyName("origin")] string? Origin = null)
 {
     /// <summary>Reports the first reason the operation is not well-formed, if any.</summary>
     public OpError Validate()

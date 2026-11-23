@@ -102,5 +102,5 @@ explains why that is the whole design.
   numbers, bookings, cancellations.
 - [API reference](../reference/api.md) — every type, method, default and
   exception.
-- Status: `0.0.1` ships interval algebra only. The operation log, replicas and
-  the n-dimensional half arrive in `0.0.x`; `0.1.0` is parity.
+- Status: the [README](https://github.com/d-led/eventfulranges.net#readme) says
+  what the current release contains; `0.1.0` completes n-dimensional parity.

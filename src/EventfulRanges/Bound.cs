@@ -1,14 +1,19 @@
+using System.Text.Json.Serialization;
+
 namespace EventfulRanges;
 
 /// <summary>
 /// Marks whether an interval endpoint belongs to the interval.
 /// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter<Bound>))]
 public enum Bound : byte
 {
     /// <summary>The endpoint belongs to the interval.</summary>
+    [JsonStringEnumMemberName("closed")]
     Closed = 0,
 
     /// <summary>The endpoint does not belong to the interval.</summary>
+    [JsonStringEnumMemberName("open")]
     Open = 1,
 }
 

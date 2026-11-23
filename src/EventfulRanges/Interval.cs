@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace EventfulRanges;
 
 /// <summary>
@@ -21,6 +23,7 @@ public readonly record struct Interval
     }
 
     /// <summary>Creates an interval with explicit inclusivity for each endpoint.</summary>
+    [JsonConstructor]
     public Interval(double start, double end, Bound startBound, Bound endBound)
     {
         Start = start;
@@ -30,21 +33,27 @@ public readonly record struct Interval
     }
 
     /// <summary>The lower endpoint.</summary>
+    [JsonPropertyName("start")]
     public double Start { get; }
 
     /// <summary>The upper endpoint.</summary>
+    [JsonPropertyName("end")]
     public double End { get; }
 
     /// <summary>Whether <see cref="Start"/> belongs to the interval.</summary>
+    [JsonPropertyName("startBound")]
     public Bound StartBound { get; }
 
     /// <summary>Whether <see cref="End"/> belongs to the interval.</summary>
+    [JsonPropertyName("endBound")]
     public Bound EndBound { get; }
 
     /// <summary>Whether the interval is well-formed.</summary>
+    [JsonIgnore]
     public bool IsValid => Validate() == IntervalError.None;
 
     /// <summary>Whether the interval contains no point at all.</summary>
+    [JsonIgnore]
     public bool IsEmpty =>
         Start > End || (Start == End && (StartBound == Bound.Open || EndBound == Bound.Open));
 

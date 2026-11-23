@@ -1,14 +1,19 @@
+using System.Text.Json.Serialization;
+
 namespace EventfulRanges;
 
 /// <summary>
 /// The kind of a range operation.
 /// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter<OpKind>))]
 public enum OpKind : byte
 {
     /// <summary>The interval joins the materialized set.</summary>
+    [JsonStringEnumMemberName("add")]
     Add = 0,
 
     /// <summary>The interval leaves the materialized set.</summary>
+    [JsonStringEnumMemberName("remove")]
     Remove = 1,
 }
 

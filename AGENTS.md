@@ -31,6 +31,10 @@ Requires the .NET 10 SDK (pinned in `global.json`) and `python3` for
 | `src/EventfulRanges/Op.cs`, `OpKind.cs`, `OpError.cs` | the operation and its wire kind |
 | `src/EventfulRanges/IClock.cs`, `HybridClock.cs`, `LamportClock.cs` | stamps |
 | `src/EventfulRanges/StrategyKind.cs`, `Strategies.cs`, `Winner.cs`, `Segment.cs` | conflict resolution |
+| `src/EventfulRanges/IEventLog.cs`, `MemoryLog.cs`, `JsonlLog.cs` | the store contracts and the two backends |
+| `src/EventfulRanges/Engine.cs`, `EngineOptions.cs` | the engine: appends, view, snapshots |
+| `src/EventfulRanges/RangeSet.cs` | the facade callers use |
+| `src/EventfulRanges/JsonContext.cs` | source-generated JSON plus the snapshot document |
 | `tests/EventfulRanges.Tests/` | xUnit behaviour tests; `Properties/` holds CsCheck oracle tests; `Support/` holds helpers |
 | `scripts/` | gate, CRAP, version bump, pack |
 | `.github/workflows/ci.yml` | build + tests on `main` and pull requests; quality gate on dispatch |
@@ -77,6 +81,14 @@ Requires the .NET 10 SDK (pinned in `global.json`) and `python3` for
 - **`README.md` uses absolute links only.** It is packed as the NuGet README and
   rendered on nuget.org, where a relative link resolves to nothing;
   `scripts/check-links.py` runs in the gate and enforces it.
+- **The engine writes before it reads.** An operation reaches the view only after
+  the log accepted it, and appends are serialized by one async gate; readers take
+  only the short state lock.
+- **A snapshot is a cache.** Reload seeds the known operations from it and
+  rebuilds the view; never trust a persisted view instead of rebuilding it.
+- **Wire names are part of the API.** They live on the types as JSON attributes
+  and beside them in the `*Names` helpers; change both together, and add new wire
+  types to `JsonContext`.
 - **Publishing only from a tag.** Never `dotnet nuget push` by hand; the release
   workflow does it with Trusted Publishing (no stored key).
 - **License stays MPL-2.0** — a derived work; keep `NOTICE` accurate as more of

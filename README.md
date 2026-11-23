@@ -11,11 +11,11 @@ ends up with the same set — no coordinator, no consensus, any arrival order.
 A port of [eventfulranges](https://github.com/d-led/eventfulranges): the same
 model, the same quality bar, an API that reads like C# rather than like Go.
 
-> **Status: 0.0.2 — the 1-D CRDT, minus storage.** Intervals with per-side
-> inclusivity, the unit of change (`Op`), clocks (hybrid and Lamport) and the
-> four conflict-resolution strategies. The log engine, the stores and the
-> `RangeSet` facade follow in `0.0.x`; **n-dimensional parity is `0.1.0`**, and
-> nothing reaches `0.1` before it.
+> **Status: `0.0.2` is published; the 1-D CRDT is complete on `main`.** Published
+> so far: per-side inclusivity, the unit of change (`Op`), clocks and the four
+> conflict-resolution strategies. `main` adds the log engine, the memory and JSON
+> Lines stores and the `RangeSet` replica facade — they ship in the next release.
+> **N-dimensional parity is `0.1.0`**, and nothing reaches `0.1` before it.
 
 ## Install
 
@@ -23,7 +23,7 @@ model, the same quality bar, an API that reads like C# rather than like Go.
 dotnet add package EventfulRanges
 ```
 
-## What this version gives you
+## What the library gives you
 
 | Piece | Types |
 | --- | --- |
@@ -31,6 +31,9 @@ dotnet add package EventfulRanges
 | Operations | `Op`, `OpKind`, `OpError`, `InvalidOpException` |
 | Clocks | `IClock`, `HybridClock`, `LamportClock` |
 | Conflict resolution | `StrategyKind`, `Strategies`, `Segment`, `Winner` |
+| Log engine | `Engine`, `EngineOptions` |
+| Stores | `IEventLog`, `MemoryLog`, `JsonlLog` |
+| Replica facade | `RangeSet` |
 
 Two replicas holding the same operations converge whatever order they arrive in:
 
@@ -69,9 +72,24 @@ accumulates. Inclusivity is per side: `[a,b]`, `[a,b)`, `(a,b]`, `(a,b)`. A
 malformed interval is a value, not an exception: `Validate()` names the problem,
 `EnsureValid()` throws where a well-formed one is required.
 
-Sweeping is what conflict resolution will stand on: `Intervals.Sweep` partitions
-the union of a set into maximal pieces, each labelled with the index of the
-winner under a caller-supplied priority.
+Sweeping is what conflict resolution stands on: `Intervals.Sweep` partitions the
+union of a set into maximal pieces, each labelled with the index of the winner
+under a caller-supplied priority.
+
+A replica is the whole loop — append to a log, stamp with a clock, keep the view
+the strategy materializes:
+
+```csharp
+using var calendar = await RangeSet.OpenAsync("./calendar", StrategyKind.Lww);
+await calendar.AddAsync(1, 10);
+await calendar.RemoveAsync(3, 5);
+calendar.Ranges;                                                  // [1,3) and (5,10]
+```
+
+`MemoryLog` keeps the log in memory, `JsonlLog` writes it to
+`ranges.stream.jsonl`, and any `IEventLog` implementation swaps in instead. Two
+replicas that applied the same operations answer the same set, whatever order
+they arrived in.
 
 ## Roadmap
 
@@ -79,7 +97,8 @@ winner under a caller-supplied priority.
 | --- | --- |
 | `0.0.1` | `Interval`, `Intervals`, `Sweep` — the interval algebra |
 | `0.0.2` | `Op`, clocks, `Strategies` — operations and conflict resolution |
-| `0.0.x` | the log engine, JSON Lines and memory stores, `RangeSet` |
+| next `0.0.x` | `Engine`, `MemoryLog`, `JsonlLog`, `RangeSet` — a working replica (on `main`) |
+| `0.0.x` | n-dimensional boxes, canonicalization, region queries, R-tree, `BoxSet`, retractions |
 | `0.0.x` | n-dimensional boxes, canonicalization, region queries, R-tree, `BoxSet`, retractions |
 | `0.1.0` | **n-dimensional parity** — the whole library surface, and the first version worth pinning |
 

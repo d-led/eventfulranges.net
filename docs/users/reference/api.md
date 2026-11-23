@@ -3,9 +3,9 @@
 Namespace `EventfulRanges` · assembly `EventfulRanges` · target framework
 `net10.0` · package `EventfulRanges` · license MPL-2.0.
 
-**Surface at 0.0.2:** interval algebra, operations, clocks and strategies. The
-log engine, the stores and `RangeSet` arrive in `0.0.x`; `0.1.0` completes
-n-dimensional parity.
+**Published at 0.0.2:** interval algebra, operations, clocks and strategies.
+**On `main`, shipping in the next release:** the log engine, the memory and JSON
+Lines stores, and the `RangeSet` facade. `0.1.0` completes n-dimensional parity.
 
 Everything below is immutable and thread-safe. `Interval` and `Cover` are
 `readonly record struct`s with structural equality; every static method is pure.
@@ -32,6 +32,14 @@ Everything below is immutable and thread-safe. `Interval` and `Cover` are
 | `StrategyNames` | `static class` | Wire names for `StrategyKind` |
 | `Winner`, `Segment` | `readonly record struct` | Who decided which region |
 | `Strategies` | `static class` | Materializes a history into a set |
+| `IEventLog` | `interface` | An append-only, versioned operation stream |
+| `ISnapshotStore`, `ICompactableLog`, `IEventStore` | `interface` | The optional store capabilities |
+| `LogReadResult`, `SnapshotReadResult` | `readonly record struct` | What a read returns |
+| `StoreConflictException`, `SnapshotNotFoundException` | `sealed class : Exception` | Store failures a caller must handle |
+| `MemoryLog`, `JsonlLog` | `sealed class` | The two stores |
+| `EngineOptions` | `sealed record` | Clock and snapshot interval |
+| `Engine` | `sealed class : IDisposable` | Applies operations, owns the cached view |
+| `RangeSet` | `sealed class : IDisposable` | The facade a caller uses |
 | `ArgumentNullException` | — | Thrown by every `Intervals` method for a null argument |
 
 ## `Interval`
@@ -245,12 +253,79 @@ Ranking order, in full: timestamp, then `string.CompareOrdinal` on the
 identifier, then the canonical interval order. The last step only matters when a
 log repeats an identifier; the engine deduplicates by id, so it never does.
 
+## Stores
+
+| Signature | Behaviour |
+| --- | --- |
+| `IEventLog.AppendAsync(long expectedVersion, IReadOnlyList<Op> ops, CancellationToken)` | Appends atomically at the expected version |
+| `IEventLog.ReadAsync(long fromVersion, CancellationToken)` | `LogReadResult(Ops, Version)`: the operations after `fromVersion` and the log's total count |
+| `ISnapshotStore.SaveSnapshotAsync(byte[] data, long version, CancellationToken)` | Stores a snapshot |
+| `ISnapshotStore.LoadSnapshotAsync(CancellationToken)` | `SnapshotReadResult(Data, Version)`; throws `SnapshotNotFoundException` |
+| `ICompactableLog.CompactAsync(byte[] snapshot, long version, CancellationToken)` | Rewrites the log as the snapshot plus what it does not cover |
+| `IEventStore` | `IEventLog` + `ISnapshotStore` |
+
+`MemoryLog(IEnumerable<Op>? initial = null)` implements the whole surface;
+`JsonlLog.Open(string directory)` writes `ranges.stream.jsonl` in that directory
+and implements the whole surface too. A stale `expectedVersion` throws
+`StoreConflictException` carrying both versions.
+
+`JsonlLog` is safe for concurrent callers in one process, not for several
+processes appending at once. Compaction rewrites through a temporary file and a
+rename, so a crash cannot leave a half-written stream.
+
+## `EngineOptions` and `Engine`
+
+```csharp
+var engine = await Engine.OpenAsync(log, StrategyKind.Lww, new EngineOptions
+{
+    Clock = new LamportClock(),      // default: HybridClock over system time
+    SnapshotEvery = 0,               // default: 100; 0 disables auto-snapshot
+});
+```
+
+| Member | Behaviour |
+| --- | --- |
+| `Engine.OpenAsync(IEventLog, StrategyKind, EngineOptions?, CancellationToken)` | Loads a compatible snapshot, replays the rest of the log, materializes |
+| `ApplyAsync(Op, CancellationToken)` | `ValueTask<Op>`: the operation as stored, with the timestamp the engine stamped. A duplicate id is a no-op |
+| `ApplyAllAsync(IReadOnlyList<Op>, CancellationToken)` | The same for a batch |
+| `Materialize()` | The canonical view, a copy |
+| `Contains(double)`, `Overlaps(Interval)` | Membership questions against the view |
+| `Ops` | Every known operation, sorted by identifier |
+| `SnapshotAsync(CancellationToken)` | Persists a snapshot now; a log without `ISnapshotStore` skips it |
+| `CompactAsync(CancellationToken)` | Throws `NotSupportedException` unless the log implements `ICompactableLog` |
+| `Dispose()` | Releases the async gate; do not use the engine afterwards |
+
+Appends are serialized by one async gate, so concurrent callers of one engine
+never race each other. A `StoreConflictException` from another writer triggers a
+catch-up and up to three retries before the exception surfaces.
+
+## `RangeSet`
+
+| Member | Behaviour |
+| --- | --- |
+| `OpenAsync(string directory, StrategyKind, EngineOptions?, CancellationToken)` | A replica over a JSON Lines stream |
+| `OpenStoreAsync(IEventLog, StrategyKind, EngineOptions?, CancellationToken)` | A replica over any log |
+| `Strategy` | The strategy it materializes with |
+| `Ranges` | The canonical view |
+| `Contains(double)`, `Overlaps(Interval)` | Membership questions |
+| `Ops` | The known operations, sorted by identifier |
+| `ApplyAsync(Op, CancellationToken)`, `ApplyAllAsync(...)` | Apply prepared operations |
+| `AddAsync(double, double, ...)`, `AddWithBoundsAsync(...)` | `ValueTask<Op>`: the applied operation |
+| `RemoveAsync(double, double, ...)`, `RemoveWithBoundsAsync(...)` | The same for removals |
+| `SnapshotAsync(...)`, `CompactAsync(...)` | Forwarded to the engine |
+| `Dispose()` | Releases the engine |
+
 ## Invariants you can rely on
 
 - `Normalize` output is sorted by `Less`, contains no empty interval, and no two
   neighbours overlap or touch. It is idempotent, and independent of input order.
 - `Difference(a, b)` covers exactly the points of `a` that `b` does not.
 - `Sweep` output is a partition of the union of its input.
+- `Materialize` is order-independent for every strategy; a replica that applied
+the same operations in another order, or received them from another replica,
+answers the same.
+- An operation reaches the view only after the log accepted it; a rejected append
+leaves the view unchanged.
 - Every returned value is a fresh, immutable value; nothing aliases internal
   state.
 

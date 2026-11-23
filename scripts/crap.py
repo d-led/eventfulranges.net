@@ -19,7 +19,7 @@ import sys
 import xml.etree.ElementTree as ElementTree
 
 THRESHOLD = 10.0
-GENERATED = (".g.cs", "AssemblyInfo", "/obj/")
+GENERATED = ("JsonContext", ".g.cs", "AssemblyInfo", "/obj/")
 TESTS = ("/tests/",)
 
 # A library has no composition root: every part is measured where it lives.

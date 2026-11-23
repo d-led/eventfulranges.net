@@ -1,20 +1,27 @@
+using System.Text.Json.Serialization;
+
 namespace EventfulRanges;
 
 /// <summary>
 /// How concurrent operations resolve into one materialized set.
 /// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter<StrategyKind>))]
 public enum StrategyKind : byte
 {
     /// <summary>The operation with the highest <c>(timestamp, id)</c> wins at each point.</summary>
+    [JsonStringEnumMemberName("lww")]
     Lww = 0,
 
     /// <summary>The operation with the lowest <c>(timestamp, id)</c> wins at each point.</summary>
+    [JsonStringEnumMemberName("fww")]
     Fww = 1,
 
     /// <summary>The union of every addition minus the union of every removal.</summary>
+    [JsonStringEnumMemberName("additive-wins")]
     AdditiveWins = 2,
 
     /// <summary>The union of every addition; removals are ignored.</summary>
+    [JsonStringEnumMemberName("grow-only")]
     GrowOnly = 3,
 }
 
