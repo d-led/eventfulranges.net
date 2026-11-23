@@ -311,18 +311,15 @@ Done, gated and on `main`:
 | P3 | `Meta` join, `Box`, `Boxes` (normalize, union, exact difference, insertion, adjacent merge, components), `Canonicalizers.Chain`, `Line`/`LineSpan`/`LineSegment` with `Crossed`/`Traverse` |
 | P4 | `BoxOp` with retraction, all five box strategies, layered views, `BoxEngine`, `BoxMemoryLog`, `BoxJsonlLog`, `BoxSet` |
 | P5 | `RTree`, one build rather than two because `Box` is immutable |
+| P6 | Box snapshots and compaction: `IBoxSnapshotStore`, `ICompactableBoxLog`, `BoxEngine.SnapshotAsync`/`CompactAsync`, and a `BoxJsonlLog` that embeds snapshots as records it skips |
 
 Still open, in the order they should be taken:
 
 1. **`store/kurrent`** — the last store backend, and the one that needs a running
    server for its integration test. It is also the only piece whose test cannot
    run in the ordinary gate, which is why it is separate.
-2. **Snapshots and compaction for the box engine**, then compaction in
-   `BoxJsonlLog`. The range half has both; the box half deliberately does not,
-   and gains them together with a snapshot contract rather than by copying the
-   range stream's rewriting machinery.
-3. **Mutation testing** (Stryker.NET, break at 80) — unported, and it will find
+2. **Mutation testing** (Stryker.NET, break at 80) — unported, and it will find
    equivalent mutants in the geometry, so it needs judgement rather than a
    threshold.
-4. **Indexed merge** (`merge_index.go`, 604 lines) — still deferred; the greedy
+3. **Indexed merge** (`merge_index.go`, 604 lines) — still deferred; the greedy
    scan is the reference and both must agree.

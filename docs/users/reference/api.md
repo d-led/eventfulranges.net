@@ -331,7 +331,8 @@ excluded. Everything below mirrors the range types one dimension up.
 | `Line`, `LineSpan`, `LineSegment` | classes and a `record struct` | Region queries: what a straight segment crosses |
 | `BoxOp`, `BoxOpKind`, `BoxOpError`, `InvalidBoxOpException` | `sealed record`, enums, exception | Add, remove, or retract a box |
 | `BoxStrategies`, `BoxSegment`, `BoxWinner`, `Layer` | `static class`, records | Materialization, and the painter's front |
-| `IBoxLog`, `BoxMemoryLog`, `BoxJsonlLog`, `BoxLogReadResult` | interface and classes | The box log |
+| `IBoxLog`, `IBoxSnapshotStore`, `ICompactableBoxLog`, `IBoxEventStore` | interfaces | The box log, and its optional snapshot and compaction capabilities |
+| `BoxMemoryLog`, `BoxJsonlLog`, `BoxLogReadResult` | classes and a `record struct` | The two box logs |
 | `BoxEngine`, `BoxEngineOptions`, `DimensionMismatchException` | `sealed class`, `record`, exception | Applies box operations, owns the cover |
 | `BoxSet` | `sealed class : IDisposable` | The n-dimensional facade |
 | `RTree` | `sealed class` | A static spatial index over a cover |
@@ -405,6 +406,15 @@ The engine rejects an operation of another dimensionality
 fixes it — and surfaces a log that moved on as `StoreConflictException` with the
 cover untouched.
 
+`SnapshotAsync()` persists the cover, the version and every known operation, and
+`CompactAsync()` rewrites the log as that snapshot plus the operations it does not
+cover. A snapshot is a cache of history, never a replacement: a restart seeds
+every operation from it and replays only the tail, so a replica that compacts
+still answers the same cover and still gossips complete history. A snapshot built
+by another strategy is ignored rather than trusted, and `SnapshotAsync()` on a log
+without `IBoxSnapshotStore` does nothing, while `CompactAsync()` on a log without
+`ICompactableBoxLog` says so with a `NotSupportedException`.
+
 ### `RTree`
 
 `RTree.Build(boxes)` bulk-loads a static index by median split on the widest axis;
@@ -417,6 +427,7 @@ stores them directly and needs no copying variant.
 - `Normalize` output is sorted by `Less`, contains no empty interval, and no two
   neighbours overlap or touch. It is idempotent, and independent of input order.
 - `Difference(a, b)` covers exactly the points of `a` that `b` does not.
+- A snapshot and its tail materialize to the same cover as the whole log.
 - `Sweep` output is a partition of the union of its input.
 - `Materialize` is order-independent for every strategy; a replica that applied
 the same operations in another order, or received them from another replica,

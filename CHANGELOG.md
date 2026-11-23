@@ -21,6 +21,10 @@ or excluded, with retraction and layered views.
   `Layers` for the painter's front.
 - `BoxEngine`, `BoxMemoryLog`, `BoxJsonlLog` and the `BoxSet` facade: an
   n-dimensional replica that persists and survives a restart.
+- Snapshots and compaction for a box log: `IBoxSnapshotStore`,
+  `ICompactableBoxLog`, `SnapshotAsync()`, `CompactAsync()`. A restart reloads
+  from a compatible snapshot and replays only the tail; compaction rewrites the
+  stream as one snapshot plus what it does not cover.
 - `RTree`: a static, bulk-loaded spatial index over a cover.
 
 Tested to the same bar as the range half: oracle property tests over the algebra,

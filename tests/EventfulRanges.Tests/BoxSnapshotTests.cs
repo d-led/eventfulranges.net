@@ -68,6 +68,25 @@ public sealed class BoxSnapshotTests
     }
 
     [Fact]
+    public async Task The_facade_compacts_and_the_replica_still_answers_the_same()
+    {
+        using var directory = new TemporaryDirectory();
+        IReadOnlyList<Box> before;
+
+        using (var running = await BoxSet.OpenAsync(directory.DirectoryPath, StrategyKind.AdditiveWins))
+        {
+            await running.AddAsync([0], [10]);
+            await running.AddAsync([20], [30]);
+            before = running.Boxes.ToList();
+            await running.CompactAsync();
+        }
+
+        using var reopened = await BoxSet.OpenAsync(directory.DirectoryPath, StrategyKind.AdditiveWins);
+
+        reopened.Boxes.ToList().ShouldBe(before);
+    }
+
+    [Fact]
     public async Task A_memory_log_without_a_snapshot_says_so()
     {
         var log = new BoxMemoryLog();

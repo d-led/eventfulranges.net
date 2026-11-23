@@ -12,9 +12,9 @@ namespace EventfulRanges;
 /// Every edit is an operation appended to a log, so the replica survives a restart
 /// and two replicas that saw the same operations answer the same cover.
 /// <para>
-/// Not here yet, and deliberately: compaction. The range facade has it because its
-/// engine snapshots; this one gains it together with the engine's snapshot support,
-/// rather than in a form nothing can use.
+/// The log keeps a snapshot beside its operations once the replica asks for one, so
+/// <see cref="CompactAsync"/> can collapse history to a snapshot plus the operations
+/// it does not cover, and a restart replays only that tail.
 /// </para>
 /// </remarks>
 public sealed class BoxSet : IDisposable
@@ -155,6 +155,14 @@ public sealed class BoxSet : IDisposable
         string operationId,
         CancellationToken cancellationToken = default) =>
         ApplyAsync(Retraction(id, operationId), cancellationToken);
+
+    /// <summary>Persists a snapshot of the current state.</summary>
+    public ValueTask SnapshotAsync(CancellationToken cancellationToken = default) =>
+        engine.SnapshotAsync(cancellationToken);
+
+    /// <summary>Collapses the log to a snapshot plus the operations it does not cover.</summary>
+    public ValueTask CompactAsync(CancellationToken cancellationToken = default) =>
+        engine.CompactAsync(cancellationToken);
 
     /// <summary>Releases the engine; do not use the facade afterwards.</summary>
     public void Dispose() => engine.Dispose();
