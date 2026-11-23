@@ -315,6 +315,52 @@ public sealed class Box : IEquatable<Box>, IComparable<Box>
     private static int Compare(Box? left, Box? right) =>
         left is null ? (right is null ? 0 : -1) : left.CompareTo(right);
 
+    /// <summary>The span of one axis, with the faces that axis carries.</summary>
+    internal Interval Slice(int axis) =>
+        new(Min[axis], Max[axis], LowestBound(axis), HighestBound(axis));
+
+    /// <summary>
+    /// Whether this box covers <paramref name="other"/> on one axis; the set
+    /// difference needs the question one axis at a time.
+    /// </summary>
+    internal bool CoversOnAxis(Box other, int axis) => CoversAxis(other, axis);
+
+    /// <summary>
+    /// A copy with one axis narrowed to <paramref name="span"/>. The bound
+    /// slices are written out so the new faces carry the span's inclusivity,
+    /// then collapsed back to the default form when they say nothing new.
+    /// </summary>
+    internal Box WithSpan(int axis, Interval span)
+    {
+        var min = Min.ToBuilder();
+        var max = Max.ToBuilder();
+        var minBound = ExplicitBounds(MinBound, Bound.Closed);
+        var maxBound = ExplicitBounds(MaxBound, Bound.Open);
+        min[axis] = span.Start;
+        max[axis] = span.End;
+        minBound[axis] = span.StartBound;
+        maxBound[axis] = span.EndBound;
+
+        return new Box(
+                min.ToImmutable(),
+                max.ToImmutable(),
+                minBound.All(bound => bound == Bound.Closed) ? [] : minBound.ToImmutable(),
+                maxBound.All(bound => bound == Bound.Open) ? [] : maxBound.ToImmutable())
+            .WithMeta(Meta);
+    }
+
+    /// <summary>The bounds per axis, with the default written out where absent.</summary>
+    private ImmutableArray<Bound>.Builder ExplicitBounds(ImmutableArray<Bound> bounds, Bound fallback)
+    {
+        var explicitBounds = ImmutableArray.CreateBuilder<Bound>(Dimensions);
+        for (var axis = 0; axis < Dimensions; axis++)
+        {
+            explicitBounds.Add(axis < bounds.Length ? bounds[axis] : fallback);
+        }
+
+        return explicitBounds;
+    }
+
     private bool HasMismatchedBounds() => (MinBound.Length != 0 && MinBound.Length != Dimensions)
         || (MaxBound.Length != 0 && MaxBound.Length != Dimensions);
 
