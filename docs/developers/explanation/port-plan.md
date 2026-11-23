@@ -313,7 +313,7 @@ Done, gated and on `main`:
 | P5 | `RTree`, one build rather than two because `Box` is immutable |
 | P6 | Box snapshots and compaction: `IBoxSnapshotStore`, `ICompactableBoxLog`, `BoxEngine.SnapshotAsync`/`CompactAsync`, and a `BoxJsonlLog` that embeds snapshots as records it skips |
 | P7 | The indexed adjacent merge (`BoxMerger`, `CoverGrid`), with the threshold re-measured for this port rather than inherited |
-| P8 | Mutation testing as a script (`scripts/mutation.sh`, Stryker.NET at break-80), with the survivors read rather than counted |
+| P8 | Mutation testing as a script (`scripts/mutation.sh`, Stryker.NET at break-75 against a measured 77%), with the survivors read rather than counted |
 
 Still open, in the order they should be taken:
 
