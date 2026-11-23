@@ -23,7 +23,7 @@ Package `EventfulRanges` and `EventfulRanges.Kurrent` · namespace `EventfulRang
 
 - [Range algebra](docs/users/explanation/range-algebra.md): why endpoints are compared, never combined; inclusivity; the shared-endpoint rule; why a sweep.
 - [Why the gate looks like this](docs/developers/explanation/quality-model.md): CRAP, the property-test oracle, and what is not measured yet.
-- [Port plan](docs/developers/explanation/port-plan.md): scope, phases and effort for reaching n-dimensional parity.
+- [Port plan](docs/developers/explanation/port-plan.md) (historical): scope, phases and effort, kept so the estimates can be compared with what shipped.
 - [Divergences from the Go original](docs/developers/explanation/divergences-from-go.md): the one place this library deliberately answers differently.
 
 ## For repository work
