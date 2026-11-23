@@ -3,7 +3,7 @@
 Versioning: `0.0.x` while the library is being ported. `0.1.0` is the
 n-dimensional parity release — the first version with the whole surface.
 
-## Unreleased
+## 0.0.3
 
 The 1-D CRDT end to end: a replica that persists, converges and restarts.
 
