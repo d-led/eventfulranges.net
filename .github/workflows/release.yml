@@ -58,12 +58,15 @@ jobs:
       #   repository owner  d-led
       #   repository        eventfulranges.net
       #   workflow file     release.yml
+      #
+      # The user below is the nuget.org profile that created the policy, not an
+      # email. Set the NUGET_USER repository variable to override it without
+      # touching this file; re-running a failed job picks the new value up.
       - name: NuGet login (OIDC to a temporary key)
         id: login
         uses: NuGet/login@v1
         with:
-          # The nuget.org profile name, not the email address.
-          user: d-led
+          user: ${{ vars.NUGET_USER || 'd-led' }}
 
       - name: Publish to NuGet
         env:
