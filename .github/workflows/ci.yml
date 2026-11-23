@@ -1,0 +1,54 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # Manual trigger ("Run workflow") for the long-running quality gate.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Format
+        run: dotnet format EventfulRanges.sln --verify-no-changes
+      - name: Build
+        run: dotnet build EventfulRanges.sln --configuration Release
+      - name: Run tests with coverage
+        run: ./scripts/test.sh
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v7.0.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: build/test-results/**/coverage.cobertura.xml
+          fail_ci_if_error: false
+
+  # Long-running quality gate: only on manual trigger to keep PR checks fast.
+  quality-gate:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Quality gate
+        run: ./scripts/quality-gate.sh
+      - name: Pack
+        run: ./scripts/pack.sh
+      - name: Upload package
+        if: always()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: packages
+          path: build/packages
+          if-no-files-found: ignore

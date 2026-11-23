@@ -1,0 +1,48 @@
+name: release
+
+# Publishing happens only here: push a tag, and the workflow checks it against
+# the project version, runs the quality gate, and pushes to NuGet. Never publish
+# from a developer console.
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: The tag must match the project version
+        run: |
+          tag_version="${GITHUB_REF_NAME#v}"
+          project_version=$(python3 -c "import xml.etree.ElementTree as E; print(E.parse('src/EventfulRanges/EventfulRanges.csproj').getroot().findtext('PropertyGroup/Version'))")
+          echo "tag ${tag_version}, project ${project_version}"
+          test "${tag_version}" = "${project_version}"
+
+      - name: Quality gate
+        run: ./scripts/quality-gate.sh
+
+      - name: Pack
+        run: ./scripts/pack.sh
+
+      - name: Publish to NuGet
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          dotnet nuget push "build/packages/*.nupkg" \
+            --api-key "${NUGET_API_KEY}" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+          dotnet nuget push "build/packages/*.snupkg" \
+            --api-key "${NUGET_API_KEY}" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate

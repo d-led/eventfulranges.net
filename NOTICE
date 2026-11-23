@@ -1,0 +1,12 @@
+EventfulRanges (eventfulranges.net)
+
+This library is a C# port of eventfulranges,
+https://github.com/d-led/eventfulranges,
+Copyright Dmitry Ledentsov, licensed under the Mozilla Public License 2.0.
+
+Ported so far:
+  - interval/interval.go, interval/set.go, interval/sweep.go
+      -> Interval, IntervalError, Intervals (Normalize/Union/Difference/...),
+         Cover, Intervals.Sweep
+
+The original and this port are both distributed under the MPL-2.0. See LICENSE.
