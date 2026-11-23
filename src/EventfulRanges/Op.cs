@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using System.Text.Json.Serialization;
 
 namespace EventfulRanges;
@@ -50,7 +49,7 @@ public sealed record Op(
     }
 
     /// <summary>Creates an operation of the given kind with a freshly generated identifier.</summary>
-    public static Op Create(OpKind kind, Interval interval) => new(NewId(), kind, interval);
+    public static Op Create(OpKind kind, Interval interval) => new(Ids.New(), kind, interval);
 
     /// <summary>Creates an addition over <c>[start, end]</c>.</summary>
     public static Op Add(double start, double end) => Create(OpKind.Add, new Interval(start, end));
@@ -68,37 +67,4 @@ public sealed record Op(
 
     /// <summary>Renders the operation as <c>add [1,5]</c>.</summary>
     public override string ToString() => FormattableString.Invariant($"{Kind.ToWireName()} {Interval}");
-
-    /// <summary>
-    /// Process-unique, roughly time-ordered: nanoseconds since the Unix epoch in
-    /// base 36, then six random bytes. The shape matches the original
-    /// implementation's identifiers.
-    /// </summary>
-    private static string NewId()
-    {
-        Span<byte> random = stackalloc byte[6];
-        RandomNumberGenerator.Fill(random);
-        var nanoseconds = (DateTimeOffset.UtcNow.UtcTicks - DateTimeOffset.UnixEpoch.UtcTicks) * 100;
-        return FormattableString.Invariant($"{ToBase36(nanoseconds)}-{Convert.ToHexStringLower(random)}");
-    }
-
-    /// <summary>Formats a non-negative number in base 36, lower case.</summary>
-    private static string ToBase36(long value)
-    {
-        const string digits = "0123456789abcdefghijklmnopqrstuvwxyz";
-        if (value == 0)
-        {
-            return "0";
-        }
-
-        Span<char> buffer = stackalloc char[13];
-        var position = buffer.Length;
-        while (value > 0)
-        {
-            buffer[--position] = digits[(int)(value % 36)];
-            value /= 36;
-        }
-
-        return new string(buffer[position..]);
-    }
 }
