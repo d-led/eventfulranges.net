@@ -166,6 +166,30 @@ public sealed class BoxEngineTests
         engine.Ops.ShouldBeEmpty();
     }
 
+    [Fact]
+    public async Task A_replica_on_a_stream_survives_a_restart()
+    {
+        using var directory = new TemporaryDirectory();
+        IReadOnlyList<Box> before;
+
+        using (var running = await BoxEngine.OpenAsync(
+            BoxJsonlLog.Open(directory.DirectoryPath),
+            StrategyKind.AdditiveWins,
+            Deterministic))
+        {
+            await running.ApplyAllAsync([BoxOp.Add([0, 0], [10, 10]), BoxOp.Remove([3, 3], [5, 5])]);
+            before = running.Materialize();
+        }
+
+        using var reopened = await BoxEngine.OpenAsync(
+            BoxJsonlLog.Open(directory.DirectoryPath),
+            StrategyKind.AdditiveWins,
+            Deterministic);
+
+        reopened.Materialize().ShouldBe(before);
+        reopened.Ops.Count.ShouldBe(2);
+    }
+
     private static BoxEngine Open(StrategyKind strategy, BoxEngineOptions? options = null, IBoxLog? log = null) =>
         Run(BoxEngine.OpenAsync(log ?? new BoxMemoryLog(), strategy, options ?? Deterministic));
 
