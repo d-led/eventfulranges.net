@@ -14,6 +14,7 @@ namespace EventfulRanges;
 [JsonSerializable(typeof(Op))]
 [JsonSerializable(typeof(Box))]
 [JsonSerializable(typeof(BoxOp))]
+[JsonSerializable(typeof(BoxSnapshotDocument))]
 [JsonSerializable(typeof(SnapshotDocument))]
 [JsonSerializable(typeof(SnapshotMarker))]
 [JsonSerializable(typeof(SnapshotLine))]
@@ -41,3 +42,17 @@ internal sealed record SnapshotLine(
 internal sealed record SnapshotMarker(
     [property: JsonPropertyName("version")] long Version,
     [property: JsonPropertyName("data")] JsonElement Data);
+
+/// <summary>
+/// The state a box engine persists: enough to rebuild the cover without replaying
+/// the operations a snapshot covers.
+/// </summary>
+/// <param name="Strategy">The strategy the snapshot was built with.</param>
+/// <param name="Version">The log version the snapshot covers.</param>
+/// <param name="Boxes">The materialized cover at that version.</param>
+/// <param name="Ops">Every known operation, so anti-entropy stays complete.</param>
+public sealed record BoxSnapshotDocument(
+    [property: JsonPropertyName("strategy")] StrategyKind Strategy,
+    [property: JsonPropertyName("version")] long Version,
+    [property: JsonPropertyName("boxes")] IReadOnlyList<Box> Boxes,
+    [property: JsonPropertyName("ops")] IReadOnlyList<BoxOp> Ops);

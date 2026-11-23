@@ -32,3 +32,29 @@ public interface IBoxLog
 /// <param name="Ops">The operations that follow the requested version.</param>
 /// <param name="Version">The log's total number of operations.</param>
 public readonly record struct BoxLogReadResult(IReadOnlyList<BoxOp> Ops, long Version);
+
+/// <summary>
+/// A box log that can keep a snapshot beside its operations, so a replica replays
+/// only what the snapshot does not cover.
+/// </summary>
+public interface IBoxSnapshotStore
+{
+    /// <summary>Stores a snapshot of the state at <paramref name="version"/>.</summary>
+    ValueTask SaveSnapshotAsync(byte[] data, long version, CancellationToken cancellationToken = default);
+
+    /// <summary>Loads the newest snapshot.</summary>
+    /// <exception cref="SnapshotNotFoundException">The store holds none.</exception>
+    ValueTask<SnapshotReadResult> LoadSnapshotAsync(CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// A box log that can be rewritten as one snapshot plus what it does not cover.
+/// </summary>
+public interface ICompactableBoxLog : IBoxLog
+{
+    /// <summary>Replaces the log with <paramref name="data"/> at <paramref name="version"/> and the operations after it.</summary>
+    ValueTask CompactAsync(byte[] data, long version, CancellationToken cancellationToken = default);
+}
+
+/// <summary>A box log that keeps snapshots and can be compacted.</summary>
+public interface IBoxEventStore : IBoxLog, IBoxSnapshotStore;

@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace EventfulRanges;
 
 /// <summary>
@@ -187,9 +189,16 @@ public sealed class BoxEngine : IDisposable
 
     private async ValueTask ReloadAsync(CancellationToken cancellationToken)
     {
-        var read = await log.ReadAsync(0, cancellationToken);
+        var snapshot = CompatibleSnapshot(await TryLoadSnapshotAsync(cancellationToken));
+        var read = await log.ReadAsync(snapshot?.Version ?? 0, cancellationToken);
+
         lock (state)
         {
+            foreach (var op in snapshot?.Ops ?? [])
+            {
+                Adopt(op);
+            }
+
             foreach (var op in read.Ops)
             {
                 Adopt(op);
@@ -197,6 +206,87 @@ public sealed class BoxEngine : IDisposable
 
             version = read.Version;
             viewIsStale = true;
+        }
+    }
+
+    /// <summary>The snapshot, when it was built with the strategy this engine uses.</summary>
+    private BoxSnapshotDocument? CompatibleSnapshot(BoxSnapshotDocument? snapshot) =>
+        snapshot is { } candidate && candidate.Strategy == strategy ? candidate : null;
+
+    private async ValueTask<BoxSnapshotDocument?> TryLoadSnapshotAsync(CancellationToken cancellationToken)
+    {
+        if (log is not IBoxSnapshotStore store)
+        {
+            return null;
+        }
+
+        try
+        {
+            var snapshot = await store.LoadSnapshotAsync(cancellationToken);
+            return JsonSerializer.Deserialize(snapshot.Data, JsonContext.Default.BoxSnapshotDocument);
+        }
+        catch (SnapshotNotFoundException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Publishes a snapshot of the current state, when the log keeps them.</summary>
+    public async ValueTask SnapshotAsync(CancellationToken cancellationToken = default)
+    {
+        if (log is not IBoxSnapshotStore store)
+        {
+            return;
+        }
+
+        await gate.WaitAsync(cancellationToken);
+        try
+        {
+            var document = BuildSnapshot();
+            await store.SaveSnapshotAsync(
+                JsonSerializer.SerializeToUtf8Bytes(document, JsonContext.Default.BoxSnapshotDocument),
+                document.Version,
+                cancellationToken);
+        }
+        finally
+        {
+            gate.Release();
+        }
+    }
+
+    /// <summary>
+    /// Rewrites the log as one snapshot plus what it does not cover.
+    /// </summary>
+    /// <exception cref="NotSupportedException">The log cannot compact.</exception>
+    public async ValueTask CompactAsync(CancellationToken cancellationToken = default)
+    {
+        if (log is not ICompactableBoxLog compactable)
+        {
+            throw new NotSupportedException("The log cannot compact; implement ICompactableBoxLog.");
+        }
+
+        await gate.WaitAsync(cancellationToken);
+        try
+        {
+            var document = BuildSnapshot();
+            await compactable.CompactAsync(
+                JsonSerializer.SerializeToUtf8Bytes(document, JsonContext.Default.BoxSnapshotDocument),
+                document.Version,
+                cancellationToken);
+        }
+        finally
+        {
+            gate.Release();
+        }
+    }
+
+    /// <summary>The state to persist: the cover, the version, and every known operation.</summary>
+    private BoxSnapshotDocument BuildSnapshot()
+    {
+        lock (state)
+        {
+            EnsureView();
+            return new BoxSnapshotDocument(strategy, version, view.ToArray(), ops.Values.OrderBy(op => op.Id, StringComparer.Ordinal).ToList());
         }
     }
 
